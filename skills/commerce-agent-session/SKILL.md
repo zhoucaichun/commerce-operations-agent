@@ -5,27 +5,27 @@ description: 在独立 Codex 会话中实现和交付 3C Commerce Operations Age
 
 # 3C Agent 会话 Skill
 
-> 独立仓库说明：本 Skill 在 `agent-repos/commerce-operations-agent` 中执行。若下文仍出现 `AIPM/项目/agent/3c-agent`，将其理解为本仓库根目录；总协调资料只读 AIPM 中对应文件，不把项目代码写回 AIPM。
+> 独立仓库说明：本 Skill 在 `agent-repos/commerce-operations-agent` 中执行。跨项目约定需要回看 AIPM，但项目代码、测试和项目文档只写入本仓库。
 
 ## 目标
 
-将 `AIPM/项目/agent/3c-agent/` 交付为可运行、可测试、可部署、可回滚的 Commerce Operations Agent MVP。只处理 3C 项目，不修改 Enterprise Agent 或 NutriChat 的业务代码、数据和环境变量。
+将独立 GitLab 仓库 `commerce-operations-agent` 交付为可运行、可测试、可部署、可回滚的 Commerce Operations Agent MVP。只处理 3C 项目，不修改 Enterprise Agent 或 NutriChat 的业务代码、数据和环境变量。
 
 ## 开始工作前的读取顺序
 
 必须按以下顺序读取，不能跳过：
 
-1. `AIPM/项目/agent/开发排期与共用基础设施.md`
-2. `AIPM/项目/agent/部署与运维手册.md`
-3. `AIPM/项目/agent/3c-agent/PRD.md`
-4. `AIPM/项目/agent/3c-agent/技术架构.md`
-5. 读取 `3c-agent/` 当前实际文件、Git 状态、远程仓库和分支状态
+1. 当前仓库根目录 `AGENTS.md`
+2. 当前仓库根目录 `README.md`
+3. `docs/PRD.md`
+4. `docs/技术架构.md`
+5. 读取当前仓库 `src/`、`tests/`、Git 状态、远程仓库和分支状态；需要跨项目约定时，再回看 AIPM 的排期和部署手册
 
 读取后先用简短文字确认：当前已有内容、缺少的工程目录、与 PRD/技术架构的差距、当前分支和是否存在未提交改动。不要因为发现旧代码或删除状态就擅自恢复、重置或删除文件。
 
 ## 实施顺序
 
-1. 建立或修正 `frontend/`、`backend/`、`eval/`、`infra/` 和 `README.md`；缺少目录时可以创建。
+1. 在当前仓库 `src/` 下建立或修正 `frontend/`、`backend/`、`eval/`、`infra/`，并更新根目录 `README.md`；缺少目录时可以创建。
 2. 先完成 FastAPI、Pydantic Schema、Request ID、健康检查、日志脱敏、数据库迁移和 Redis 接入。
 3. 导入脱敏模拟的 `products`、`policies`、`orders`、`shipments` 种子数据。
 4. 实现 Commerce Graph：输入校验 → 读取会话状态 → Planner → 受控工具 → 工具结果校验 → 答复或人工接管 → Checkpoint/Trace。
