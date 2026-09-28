@@ -20,6 +20,9 @@ class PostgresStore(InMemoryStore):
         self.connection = psycopg.connect(dsn, autocommit=True)
         migration = Path(__file__).parents[1] / "migrations" / "002_postgres_state.sql"
         self.connection.execute(migration.read_text(encoding="utf-8"))
+        self.products = [row[0] for row in self.connection.execute("SELECT payload FROM commerce_products ORDER BY sku")]
+        self.policies = [row[0] for row in self.connection.execute("SELECT payload FROM commerce_policies ORDER BY policy_id")]
+        self.orders = {row[0]: row[1] for row in self.connection.execute("SELECT order_id,payload FROM commerce_orders")}
 
     def session(self, thread_id: str) -> dict[str, Any]:
         row = self.connection.execute("SELECT payload FROM commerce_sessions WHERE thread_id = %s", (thread_id,)).fetchone()
