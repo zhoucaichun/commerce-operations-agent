@@ -26,3 +26,9 @@
 - Replaced the standard-library HTTP adapter with FastAPI/Pydantic and OpenAPI support.
 - Added local SQLite migrations for sessions, simulated tickets, and metrics; persistence is opt-in through `COMMERCE_DB_PATH`.
 - Added API contract tests and a deterministic evaluation smoke entry.
+
+### Deployment foundation
+
+- Added isolated Docker Compose services for API, PostgreSQL, and Redis, with health checks and separate volumes.
+- Added synthetic-only PostgreSQL initialization metadata and deployment/rollback documentation.
+- PostgreSQL/Redis are not yet wired into business storage; no production or merchant system connection was added.

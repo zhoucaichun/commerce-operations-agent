@@ -43,3 +43,7 @@ GitLab：`https://gitlab.com/zhoucaichun/commerce-operations-agent.git`
 当前 API 已升级为 FastAPI/Pydantic。启动：`python src/backend/main.py`；OpenAPI 文档：`/docs`。默认使用内存 SQLite；要保留会话、幂等工单和指标，请设置 `COMMERCE_DB_PATH` 到本机未提交的文件路径，或执行 `python src/backend/seed.py --database <路径>` 初始化本地库。
 
 评测冒烟：`python src/eval/run_smoke.py`。该评测只覆盖模拟兼容性、模拟订单和高风险接管，不调用模型或真实商家系统。
+
+## Compose 基础设施
+
+已提供独立的 API、PostgreSQL 与 Redis Compose，见 `src/infra/docker-compose.yml`。启动、检查和回滚命令见 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)。当前 PostgreSQL/Redis 是部署基础设施，业务读写尚未迁移，运行时仍使用 SQLite；此边界已在部署文档中明确。

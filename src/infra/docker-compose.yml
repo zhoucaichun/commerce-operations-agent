@@ -1,0 +1,52 @@
+services:
+  api:
+    build:
+      context: ../backend
+      dockerfile: ../infra/Dockerfile.api
+    environment:
+      COMMERCE_DB_PATH: /data/commerce.sqlite3
+    ports:
+      - "8000:8000"
+    volumes:
+      - commerce_api_data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: commerce_db
+      POSTGRES_USER: commerce_app
+      POSTGRES_PASSWORD: change-me-local-only
+    volumes:
+      - commerce_postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U commerce_app -d commerce_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - commerce_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  commerce_api_data:
+  commerce_postgres_data:
+  commerce_redis_data:
