@@ -47,3 +47,5 @@ GitLab：`https://gitlab.com/zhoucaichun/commerce-operations-agent.git`
 ## Compose 基础设施
 
 已提供独立的 API、PostgreSQL 与 Redis Compose，见 `src/infra/docker-compose.yml`。启动、检查和回滚命令见 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)。当前 PostgreSQL/Redis 是部署基础设施，业务读写尚未迁移，运行时仍使用 SQLite；此边界已在部署文档中明确。
+
+PostgreSQL/Redis 适配器现已可由 `COMMERCE_POSTGRES_DSN` 与 `COMMERCE_REDIS_URL` 启用；缺少驱动或依赖不可用时 `/ready` 会安全失败。当前工作环境未能完成驱动安装且 Docker 权限受限，因此尚未宣称 PostgreSQL/Redis 集成测试完成。

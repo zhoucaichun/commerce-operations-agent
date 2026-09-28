@@ -32,3 +32,9 @@
 - Added isolated Docker Compose services for API, PostgreSQL, and Redis, with health checks and separate volumes.
 - Added synthetic-only PostgreSQL initialization metadata and deployment/rollback documentation.
 - PostgreSQL/Redis are not yet wired into business storage; no production or merchant system connection was added.
+
+### External storage adapters
+
+- Added opt-in PostgreSQL storage for sessions, simulated tickets, and metrics.
+- Added opt-in Redis readiness guard and Compose connection configuration.
+- External-service runtime verification remains pending because the local Docker configuration is inaccessible.

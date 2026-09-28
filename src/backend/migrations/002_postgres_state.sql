@@ -1,0 +1,3 @@
+CREATE TABLE IF NOT EXISTS commerce_sessions (thread_id TEXT PRIMARY KEY, payload JSONB NOT NULL);
+CREATE TABLE IF NOT EXISTS commerce_tickets (idempotency_key TEXT PRIMARY KEY, payload JSONB NOT NULL);
+CREATE TABLE IF NOT EXISTS commerce_metrics (name TEXT PRIMARY KEY, value BIGINT NOT NULL DEFAULT 0);

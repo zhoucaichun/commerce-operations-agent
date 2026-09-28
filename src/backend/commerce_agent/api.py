@@ -13,6 +13,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from .agent import CommerceAgent
 from .models import ChatRequest, ValidationError
 from .sqlite_store import SQLiteStore
+from .postgres_store import PostgresStore
+from .redis_support import RedisHealth
 
 
 class ChatPayload(BaseModel):
@@ -24,12 +26,14 @@ class ChatPayload(BaseModel):
 
 
 def build_agent(database_path: str | None = None) -> CommerceAgent:
-    return CommerceAgent(SQLiteStore(database_path or os.getenv("COMMERCE_DB_PATH", ":memory:")))
+    dsn = os.getenv("COMMERCE_POSTGRES_DSN")
+    return CommerceAgent(PostgresStore(dsn) if dsn else SQLiteStore(database_path or os.getenv("COMMERCE_DB_PATH", ":memory:")))
 
 
 def create_app(agent_instance: CommerceAgent | None = None) -> FastAPI:
     app = FastAPI(title="Commerce Operations Agent", version="0.2.0")
     app.state.agent = agent_instance or build_agent()
+    app.state.redis_health = RedisHealth(os.getenv("COMMERCE_REDIS_URL"))
 
     @app.middleware("http")
     async def request_id_middleware(request: Request, call_next):
@@ -47,9 +51,10 @@ def create_app(agent_instance: CommerceAgent | None = None) -> FastAPI:
     def ready(request: Request) -> dict[str, Any]:
         try:
             request.app.state.agent.store.ready()
+            request.app.state.redis_health.ready()
         except Exception as exc:
             raise HTTPException(status_code=503, detail="synthetic store unavailable") from exc
-        return {"status": "ready", "checks": {"sqlite": "ok"}}
+        return {"status": "ready", "checks": {"storage": "ok", "redis": "ok"}}
 
     @app.get("/metrics")
     def metrics(request: Request) -> dict[str, Any]:
