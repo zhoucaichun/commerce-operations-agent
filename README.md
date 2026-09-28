@@ -1,40 +1,39 @@
 # Commerce Operations Agent
 
-3C Commerce Operations Agent 的独立项目仓库。该仓库是 3C 项目的代码、测试、部署配置和项目文档唯一工作区；总协调信息仍保留在 GitHub 的 AIPM 仓库。
+独立的 3C Commerce Operations Agent 仓库。本轮交付一个可本地运行、仅使用脱敏模拟数据的后端纵向切片；不连接真实商家生产系统。
 
-## AI 开发入口
+## 当前实现
 
-每次开始 Codex 会话时，按以下顺序读取：
+- `src/backend/commerce_agent/`：输入校验、内存会话、受控工具、确定性 Agent Loop、Trace 和人工接管。
+- `src/backend/main.py`：标准库 HTTP 适配器，提供 `GET /health`、`GET /ready`、`GET /metrics` 和 `POST /api/v1/chat`。
+- 受控工具：商品查询、兼容性校验、政策查询、订单/物流查询、带 `idempotency_key` 的模拟工单创建。
+- 安全保护：订单查询必须同时提供订单号与脱敏身份后四位；退款、取消订单、真实地址或库存修改均直接人工接管；消息原文不写入 Trace。
 
-1. `AGENTS.md`
-2. `skills/commerce-agent-session/SKILL.md`
-3. `docs/PRD.md`
-4. `docs/技术架构.md`
-5. 当前 Git 状态、分支和远程仓库
+## 启动与测试
 
-先报告当前已有内容、缺口、风险和本次任务，再修改代码。只在本仓库内实现 3C 业务，不要把代码写回 AIPM 或其他项目仓库。
+在仓库根目录执行：
 
-## 目录约定
-
-```text
-.
-├── docs/                 # PRD、架构、决策和验收记录
-├── skills/               # 本项目 Codex 会话 Skill
-├── src/                  # 应用实现；按 frontend/backend/eval/infra 分层
-├── tests/                # 单元、集成、契约、冒烟和 badcase 测试
-├── AGENTS.md             # AI 开发边界与交付规则
-├── CHANGELOG.md          # 可验证的变更记录
-└── README.md             # 启动、测试、评估、部署和回滚说明
+```powershell
+python src/backend/main.py
+python -m unittest discover -s tests -p "test_*.py" -v
 ```
 
-实现需要遵循 `docs/技术架构.md` 中的 frontend、backend、eval、infra 分层；如果实际采用独立顶层目录，应在本次提交的 README 中说明映射关系。
+示例请求：
 
-## 当前状态
+```powershell
+$body = @{ thread_id = "demo-thread"; message = "查订单 ORD-10023 物流，后四位 4821" } | ConvertTo-Json
+Invoke-RestMethod http://127.0.0.1:8000/api/v1/chat -Method Post -ContentType "application/json" -Body $body
+```
 
-当前仓库以产品文档和工程骨架为主，尚未声称 MVP 已实现。每次完成任务后更新 README 的“当前状态”、测试命令和已知边界，并在 `CHANGELOG.md` 记录真实结果。
+已验证：6 个单元测试通过；`/health`、`/ready`、模拟订单查询和风险接管 HTTP 冒烟通过。所有订单、商品、政策与库存均为 synthetic seed，不代表真实信息。
 
-## Git 归属
+## 已知未完成项
 
-远程仓库：`https://gitlab.com/zhoucaichun/commerce-operations-agent.git`
+- 尚未接入 FastAPI/Pydantic、PostgreSQL/pgvector、Redis、LangGraph、LLM、Next.js、SSE、Docker Compose、迁移、CI 和完整评测集。
+- 会话、工单和指标仅存于进程内，重启后丢失；尚无生产级鉴权、限流或多实例一致性。
 
-本仓库的提交只推送到上述 GitLab 项目。AIPM GitHub 仓库只负责三项目排期、共用基础设施和协作规则。
+## 安全边界
+
+首版不连接真实商家系统，不扣库存、不退款、不取消真实订单、不修改真实地址。调用方不能绕过工具白名单、订单身份校验、幂等键或人工接管规则。
+
+GitLab：`https://gitlab.com/zhoucaichun/commerce-operations-agent.git`
