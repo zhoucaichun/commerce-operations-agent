@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
 from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
 from .agent import CommerceAgent
@@ -40,6 +43,7 @@ def create_app(agent_instance: CommerceAgent | None = None) -> FastAPI:
     app.state.agent.checkpoint_store = app.state.redis_health
     app.state.agent.retry_store = app.state.redis_health
     app.state.graph = CommerceGraph(app.state.agent)
+    frontend_dir = Path(os.getenv("COMMERCE_FRONTEND_DIR", Path(__file__).resolve().parents[2] / "frontend"))
 
     @app.middleware("http")
     async def request_id_middleware(request: Request, call_next):
@@ -52,6 +56,12 @@ def create_app(agent_instance: CommerceAgent | None = None) -> FastAPI:
     @app.get("/health")
     def health() -> dict[str, str]:
         return {"status": "ok", "service": "commerce-agent"}
+
+    @app.get("/", include_in_schema=False)
+    def frontend() -> FileResponse:
+        return FileResponse(frontend_dir / "index.html")
+
+    app.mount("/assets", StaticFiles(directory=frontend_dir / "assets"), name="assets")
 
     @app.get("/ready")
     def ready(request: Request) -> dict[str, Any]:

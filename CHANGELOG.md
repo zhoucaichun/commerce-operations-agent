@@ -17,6 +17,11 @@
 
 - Added environment-only synthetic Bearer token authentication with viewer, support, and operator roles; no real identity provider or user data is connected.
 
+### Web MVP
+
+- Added a dependency-free, API-hosted frontend for safe chat, order lookup inputs, simulated ticket creation, trace summaries, and human-handoff presentation.
+- Added frontend endpoint and Compose smoke coverage; the web client only calls this repository's FastAPI endpoint.
+
 ### Added
 
 - Added a dependency-free local backend slice under `src/backend/commerce_agent/`.

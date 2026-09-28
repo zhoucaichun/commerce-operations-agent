@@ -8,6 +8,7 @@ from pathlib import Path
 import subprocess
 import time
 import urllib.request
+from uuid import uuid4
 
 
 def request(url: str, payload: dict) -> dict:
@@ -35,10 +36,14 @@ def main() -> None:
     parser.add_argument("--restart-api", action="store_true")
     args = parser.parse_args()
     wait_ready(args.url)
-    assert request(args.url, {"thread_id": "compose-product", "message": "charger"})["status"] == "completed"
-    assert request(args.url, {"thread_id": "compose-policy", "message": "warranty policy"})["status"] == "completed"
-    assert request(args.url, {"thread_id": "compose-order", "message": "order ORD-10023 tracking 4821"})["status"] == "completed"
-    ticket = {"thread_id": "compose-ticket", "message": "create a human support ticket", "idempotency_key": "compose-restart-ticket-001"}
+    page = urllib.request.urlopen(f"{args.url}/", timeout=10).read().decode("utf-8")
+    assert "Commerce Operations Agent" in page
+    assert urllib.request.urlopen(f"{args.url}/assets/app.js", timeout=10).status == 200
+    run_id = uuid4().hex[:12]
+    assert request(args.url, {"thread_id": f"compose-product-{run_id}", "message": "charger"})["status"] == "completed"
+    assert request(args.url, {"thread_id": f"compose-policy-{run_id}", "message": "warranty policy"})["status"] == "completed"
+    assert request(args.url, {"thread_id": f"compose-order-{run_id}", "message": "order ORD-10023 tracking 4821"})["status"] == "completed"
+    ticket = {"thread_id": f"compose-ticket-{run_id}", "message": "create a human support ticket", "idempotency_key": f"compose-restart-{run_id}"}
     first = request(args.url, ticket)
     assert first["status"] == "completed", first
     if args.restart_api:

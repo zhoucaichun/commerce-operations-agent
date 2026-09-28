@@ -1,8 +1,8 @@
 services:
   api:
     build:
-      context: ../backend
-      dockerfile: ../infra/Dockerfile.api
+      context: ..
+      dockerfile: infra/Dockerfile.api
     environment:
       COMMERCE_DB_PATH: /data/commerce.sqlite3
       COMMERCE_POSTGRES_DSN: postgresql://commerce_app:change-me-local-only@postgres:5432/commerce_db

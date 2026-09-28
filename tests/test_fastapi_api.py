@@ -25,6 +25,10 @@ class FastApiTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_health_ready_and_request_id(self):
+        page = self.client.get("/")
+        self.assertEqual(page.status_code, 200)
+        self.assertIn("Commerce Operations Agent", page.text)
+        self.assertEqual(self.client.get("/assets/app.js").status_code, 200)
         self.assertEqual(self.client.get("/health").json()["status"], "ok")
         self.assertEqual(self.client.get("/ready").json()["status"], "ready")
         response = self.client.post(

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>3C Commerce Operations Agent</title>
+    <link rel="stylesheet" href="/assets/styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <header>
+        <p class="eyebrow">SYNTHETIC-ONLY MVP</p>
+        <h1>3C Commerce Operations Agent</h1>
+        <p>商品、订单与政策均为脱敏模拟数据。不会退款、取消订单、扣减库存或修改真实地址。</p>
+      </header>
+      <section class="card" aria-labelledby="chat-title">
+        <h2 id="chat-title">对话与订单查询</h2>
+        <div class="presets" aria-label="快捷示例">
+          <button data-preset="product">查询商品</button>
+          <button data-preset="order">查询订单</button>
+          <button data-preset="handoff">转人工</button>
+        </div>
+        <form id="chat-form">
+          <label>问题<textarea id="message" required maxlength="4000" placeholder="例如：查询订单 ORD-10023 物流，后四位 4821"></textarea></label>
+          <div class="grid">
+            <label>订单号（可选）<input id="order-id" placeholder="ORD-10023"></label>
+            <label>身份后四位（可选）<input id="identity-suffix" inputmode="numeric" maxlength="4" placeholder="4821"></label>
+            <label>工单幂等键（仅创建模拟工单）<input id="idempotency-key" minlength="8" placeholder="demo-ticket-001"></label>
+            <label>合成 Bearer Token（启用认证时）<input id="token" type="password" autocomplete="off" placeholder="不填则本地开发模式"></label>
+          </div>
+          <button class="primary" type="submit">提交安全查询</button>
+        </form>
+      </section>
+      <section class="card result" aria-live="polite">
+        <div class="result-heading"><h2>结果 / 人工接管</h2><span id="status">等待请求</span></div>
+        <p id="answer">提交问题后，这里会显示受控工具验证后的答复或人工接管原因。</p>
+        <details><summary>工具与流程摘要</summary><pre id="trace">尚无执行记录</pre></details>
+      </section>
+    </main>
+    <script src="/assets/app.js"></script>
+  </body>
+</html>
