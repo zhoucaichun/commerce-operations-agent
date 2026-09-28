@@ -8,6 +8,10 @@
 - Added Redis-backed synthetic session checkpoints and bounded retry counters for read-only tools; Redis absence remains a safe no-retry fallback.
 - Added PostgreSQL seed parity for cable and warranty data, opt-in repository tests, and a Compose smoke that checks API-restart ticket persistence.
 
+### CI
+
+- Added GitLab CI jobs for unit/API/graph regression, deterministic evaluation, isolated PostgreSQL repository tests, and Docker Compose restart-persistence smoke checks.
+
 ### Added
 
 - Added a dependency-free local backend slice under `src/backend/commerce_agent/`.

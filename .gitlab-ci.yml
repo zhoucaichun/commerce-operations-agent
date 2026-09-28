@@ -1,0 +1,55 @@
+stages:
+  - verify
+  - integration
+
+default:
+  interruptible: true
+
+unit_and_eval:
+  stage: verify
+  image: python:3.10-slim
+  before_script:
+    - python -m pip install --no-cache-dir -r src/backend/requirements.txt
+  script:
+    - python -m unittest discover -s tests -p "test_*.py" -v
+    - python src/eval/run_smoke.py
+
+postgres_repository:
+  stage: integration
+  image: python:3.10-slim
+  services:
+    - name: postgres:16-alpine
+      alias: postgres
+  variables:
+    POSTGRES_DB: commerce_ci
+    POSTGRES_USER: commerce_ci
+    POSTGRES_PASSWORD: commerce_ci_local_only
+    COMMERCE_POSTGRES_DSN: postgresql://commerce_ci:commerce_ci_local_only@postgres:5432/commerce_ci
+  before_script:
+    - python -m pip install --no-cache-dir -r src/backend/requirements.txt
+  script:
+    - python -m unittest discover -s tests -p "test_postgres_repository.py" -v
+
+compose_smoke:
+  stage: integration
+  image: docker:27-cli
+  services:
+    - name: docker:27-dind
+      alias: docker
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+    COMPOSE_PROJECT_NAME: commerce-agent-ci
+  script:
+    - docker compose -f src/infra/docker-compose.yml up --build -d --wait
+    - docker compose -f src/infra/docker-compose.yml ps
+    - docker compose -f src/infra/docker-compose.yml exec -T api python -c "import json, urllib.request; base='http://127.0.0.1:8000/api/v1/chat'; send=lambda p: json.loads(urllib.request.urlopen(urllib.request.Request(base, json.dumps(p).encode(), {'Content-Type':'application/json'}), timeout=10).read()); assert send({'thread_id':'ci-product','message':'charger'})['status']=='completed'; assert send({'thread_id':'ci-policy','message':'warranty policy'})['status']=='completed'; assert send({'thread_id':'ci-order','message':'order ORD-10023 tracking 4821'})['status']=='completed'; first=send({'thread_id':'ci-ticket','message':'create a human support ticket','idempotency_key':'ci-compose-ticket-001'}); assert first['status']=='completed'"
+    - docker compose -f src/infra/docker-compose.yml restart api
+    - sleep 5
+    - docker compose -f src/infra/docker-compose.yml exec -T api python -c "import json, urllib.request; base='http://127.0.0.1:8000'; assert json.loads(urllib.request.urlopen(base+'/ready', timeout=10).read())['status']=='ready'; p={'thread_id':'ci-ticket','message':'create a human support ticket','idempotency_key':'ci-compose-ticket-001'}; r=json.loads(urllib.request.urlopen(urllib.request.Request(base+'/api/v1/chat', json.dumps(p).encode(), {'Content-Type':'application/json'}), timeout=10).read()); assert r['status']=='completed' and 'SIM-TKT-' in r['answer']"
+  after_script:
+    - docker compose -f src/infra/docker-compose.yml logs --no-color || true
+    - docker compose -f src/infra/docker-compose.yml down -v || true
+  rules:
+    - when: manual
+      allow_failure: true

@@ -6,6 +6,8 @@ The runnable MVP uses FastAPI, PostgreSQL-backed synthetic state in Compose, Red
 
 Run local regression with `python -m unittest discover -s tests -p "test_*.py" -v` and `python src/eval/run_smoke.py`. For the isolated Compose integration check, start Compose and run `python src/eval/run_compose_smoke.py --restart-api`.
 
+GitLab CI automatically runs fast regression/evaluation and an isolated PostgreSQL Repository suite. An optional manual Docker Compose smoke validates API-restart persistence; it requires a GitLab Runner that permits Docker-in-Docker privileged mode.
+
 独立的 3C Commerce Operations Agent 仓库。本轮交付一个可本地运行、仅使用脱敏模拟数据的后端纵向切片；不连接真实商家生产系统。
 
 ## 当前实现
