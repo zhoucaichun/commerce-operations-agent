@@ -38,3 +38,7 @@
 - Added opt-in PostgreSQL storage for sessions, simulated tickets, and metrics.
 - Added opt-in Redis readiness guard and Compose connection configuration.
 - External-service runtime verification remains pending because the local Docker configuration is inaccessible.
+
+### Redis guards
+
+- Added Redis-backed fixed-window chat rate limiting and short-lived idempotency locks for simulated ticket requests.

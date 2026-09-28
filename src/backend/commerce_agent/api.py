@@ -66,7 +66,19 @@ def create_app(agent_instance: CommerceAgent | None = None) -> FastAPI:
             domain_request = ChatRequest.from_dict(payload.model_dump())
         except ValidationError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
-        response = request.app.state.agent.handle(domain_request, request_id=x_request_id or request.state.request_id)
+        guard = request.app.state.redis_health
+        if not guard.allow(domain_request.thread_id):
+            raise HTTPException(status_code=429, detail="rate limit exceeded")
+        locked = False
+        if domain_request.idempotency_key:
+            locked = guard.acquire_idempotency_lock(domain_request.idempotency_key)
+            if not locked:
+                raise HTTPException(status_code=409, detail="idempotent request is already in progress")
+        try:
+            response = request.app.state.agent.handle(domain_request, request_id=x_request_id or request.state.request_id)
+        finally:
+            if locked:
+                guard.release_idempotency_lock(domain_request.idempotency_key)
         return JSONResponse(response.as_dict())
 
     return app
