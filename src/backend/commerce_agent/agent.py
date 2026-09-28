@@ -20,16 +20,18 @@ PROMPT_VERSION = "rules-v1"
 
 
 class CommerceAgent:
-    def __init__(self, store: InMemoryStore | None = None) -> None:
+    def __init__(self, store: InMemoryStore | None = None, checkpoint_store=None, retry_store=None) -> None:
         self.store = store or InMemoryStore()
         self.tools = ToolRegistry(self.store)
+        self.checkpoint_store = checkpoint_store
+        self.retry_store = retry_store
 
     def handle(self, request: ChatRequest, request_id: str | None = None) -> AgentResponse:
         request_id = request_id or f"req_{uuid4().hex}"
         self.store.increment("chat_requests")
         trace: list[dict[str, Any]] = []
         summaries: list[dict[str, Any]] = []
-        state = self.store.session(request.thread_id)
+        state = self._load_state(request.thread_id)
         state["messages"].append({"role": "user", "summary": self._summarize(request.message)})
         state["slots"].update(request.slots)
 
@@ -44,7 +46,7 @@ class CommerceAgent:
                 reason=risky,
                 summary="该请求涉及首版禁止的真实写操作，已停止自动执行。",
             )
-            self.store.save_session(request.thread_id, state)
+            self._save_state(request.thread_id, state)
             return AgentResponse(
                 status="handoff",
                 answer="我不能在首版中直接执行退款、取消订单、修改真实地址或库存变更；可以为你整理事实并提交人工处理申请。",
@@ -64,7 +66,7 @@ class CommerceAgent:
                 reason="max_steps_reached",
                 summary=f"会话已达到最多 {MAX_STEPS} 步，停止继续调用工具。",
             )
-            self.store.save_session(request.thread_id, state)
+            self._save_state(request.thread_id, state)
             return AgentResponse(
                 status="handoff",
                 answer=f"本会话已达到最多 {MAX_STEPS} 步自动处理限制，已停止继续尝试并建议人工接管。",
@@ -125,8 +127,17 @@ class CommerceAgent:
         response.trace = trace
         state["step_count"] = min(MAX_STEPS, state.get("step_count", 0) + len(summaries))
         state["messages"].append({"role": "assistant", "status": response.status})
-        self.store.save_session(request.thread_id, state)
+        self._save_state(request.thread_id, state)
         return response
+
+    def _load_state(self, thread_id: str) -> dict[str, Any]:
+        checkpoint = self.checkpoint_store.load_checkpoint(thread_id) if self.checkpoint_store else None
+        return checkpoint or self.store.session(thread_id)
+
+    def _save_state(self, thread_id: str, state: dict[str, Any]) -> None:
+        self.store.save_session(thread_id, state)
+        if self.checkpoint_store:
+            self.checkpoint_store.save_checkpoint(thread_id, state)
 
     def _handle_order(self, request, state, trace, summaries, request_id):
         order_id = request.slots.get("order_id") or self._find_order_id(request.message)
@@ -291,8 +302,14 @@ class CommerceAgent:
         try:
             result = self.tools.invoke(name, arguments, idempotency_key=request.idempotency_key)
         except ToolError as exc:
-            self._trace(trace, request_id, request.thread_id, "validate_tool_result", "error", type(exc).__name__)
-            raise
+            definition = self.tools._tools.get(name)
+            can_retry = bool(definition and definition.read_only and self.retry_store)
+            if can_retry and self.retry_store.consume_tool_retry(request_id, name):
+                self._trace(trace, request_id, request.thread_id, "tool_retry", "retrying", type(exc).__name__)
+                result = self.tools.invoke(name, arguments, idempotency_key=request.idempotency_key)
+            else:
+                self._trace(trace, request_id, request.thread_id, "validate_tool_result", "error", type(exc).__name__)
+                raise
         elapsed_ms = round((time.perf_counter() - started) * 1000, 2)
         self._trace(trace, request_id, request.thread_id, "validate_tool_result", "ok", elapsed_ms=elapsed_ms)
         summaries.append({"tool": name, "ok": True, "result_keys": sorted(result.keys())})

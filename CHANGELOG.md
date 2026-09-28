@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### LangGraph and state resilience
+
+- Added explicit LangGraph guard, planner, controlled-tool, validation and handoff nodes around the synthetic agent.
+- Added Redis-backed synthetic session checkpoints and bounded retry counters for read-only tools; Redis absence remains a safe no-retry fallback.
+- Added PostgreSQL seed parity for cable and warranty data, opt-in repository tests, and a Compose smoke that checks API-restart ticket persistence.
+
 ### Added
 
 - Added a dependency-free local backend slice under `src/backend/commerce_agent/`.

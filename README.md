@@ -1,5 +1,11 @@
 # Commerce Operations Agent
 
+## Current delivery status
+
+The runnable MVP uses FastAPI, PostgreSQL-backed synthetic state in Compose, Redis rate limiting/checkpoints/retry counters, and an explicit LangGraph `guard -> planner -> controlled tool -> validate -> handoff` orchestration. All product, policy, order and ticket data remain synthetic. No merchant production system, inventory mutation, refund, cancellation, or address change is connected or permitted.
+
+Run local regression with `python -m unittest discover -s tests -p "test_*.py" -v` and `python src/eval/run_smoke.py`. For the isolated Compose integration check, start Compose and run `python src/eval/run_compose_smoke.py --restart-api`.
+
 独立的 3C Commerce Operations Agent 仓库。本轮交付一个可本地运行、仅使用脱敏模拟数据的后端纵向切片；不连接真实商家生产系统。
 
 ## 当前实现

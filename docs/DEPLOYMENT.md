@@ -1,5 +1,9 @@
 # 本地部署与回滚
 
+## Current Compose verification
+
+Compose runs the API against PostgreSQL for synthetic sessions, tickets, metrics, catalog, policies and orders. Redis provides readiness, fixed-window rate limits, short idempotency locks, synthetic session checkpoints and one retry counter per read-only tool/request. Verify the full path after startup with `python src/eval/run_compose_smoke.py --restart-api`; it checks product, policy and order seeds plus a simulated ticket surviving an API restart. It never contacts a real merchant system.
+
 ## Compose 启动
 
 ```powershell

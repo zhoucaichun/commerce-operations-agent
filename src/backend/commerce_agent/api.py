@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from .agent import CommerceAgent
+from .graph import CommerceGraph
 from .models import ChatRequest, ValidationError
 from .sqlite_store import SQLiteStore
 from .postgres_store import PostgresStore
@@ -34,6 +35,9 @@ def create_app(agent_instance: CommerceAgent | None = None) -> FastAPI:
     app = FastAPI(title="Commerce Operations Agent", version="0.2.0")
     app.state.agent = agent_instance or build_agent()
     app.state.redis_health = RedisHealth(os.getenv("COMMERCE_REDIS_URL"))
+    app.state.agent.checkpoint_store = app.state.redis_health
+    app.state.agent.retry_store = app.state.redis_health
+    app.state.graph = CommerceGraph(app.state.agent)
 
     @app.middleware("http")
     async def request_id_middleware(request: Request, call_next):
@@ -75,7 +79,7 @@ def create_app(agent_instance: CommerceAgent | None = None) -> FastAPI:
             if not locked:
                 raise HTTPException(status_code=409, detail="idempotent request is already in progress")
         try:
-            response = request.app.state.agent.handle(domain_request, request_id=x_request_id or request.state.request_id)
+            response = request.app.state.graph.invoke(domain_request, request_id=x_request_id or request.state.request_id)
         finally:
             if locked:
                 guard.release_idempotency_lock(domain_request.idempotency_key)
