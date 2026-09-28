@@ -20,3 +20,9 @@
 
 - No FastAPI/Pydantic, PostgreSQL, Redis, LangGraph, LLM, frontend, Docker, migration, CI, or full evaluation dataset is included yet.
 - No real merchant system, inventory mutation, refund, cancellation, or address mutation was used.
+
+### FastAPI upgrade
+
+- Replaced the standard-library HTTP adapter with FastAPI/Pydantic and OpenAPI support.
+- Added local SQLite migrations for sessions, simulated tickets, and metrics; persistence is opt-in through `COMMERCE_DB_PATH`.
+- Added API contract tests and a deterministic evaluation smoke entry.
