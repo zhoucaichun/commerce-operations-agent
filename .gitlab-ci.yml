@@ -11,8 +11,14 @@ unit_and_eval:
   before_script:
     - python -m pip install --no-cache-dir -r src/backend/requirements.txt
   script:
-    - python -m unittest discover -s tests -p "test_*.py" -v
-    - python src/eval/run_smoke.py
+    - python src/eval/run_test_report.py --report reports/junit.xml
+    - python src/eval/run_evaluation.py --report reports/evaluation.json
+  artifacts:
+    when: always
+    reports:
+      junit: reports/junit.xml
+    paths:
+      - reports/evaluation.json
 
 postgres_repository:
   stage: integration

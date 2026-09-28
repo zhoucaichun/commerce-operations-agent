@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 import sys
 import tempfile
 import unittest
@@ -52,6 +53,25 @@ class FastApiTests(unittest.TestCase):
         self.assertIn("重复请求已复用", second["answer"])
         reloaded.app.state.agent.store.close()
         reloaded.close()
+
+    def test_synthetic_bearer_auth_and_roles(self):
+        previous_required = os.environ.get("COMMERCE_AUTH_REQUIRED")
+        previous_tokens = os.environ.get("COMMERCE_DEMO_TOKENS")
+        os.environ["COMMERCE_AUTH_REQUIRED"] = "true"
+        os.environ["COMMERCE_DEMO_TOKENS"] = '{"viewer-token":{"subject":"synthetic-viewer","role":"viewer"},"support-token":{"subject":"synthetic-support","role":"support"}}'
+        secured = TestClient(create_app(build_agent(str(Path(self.temp.name) / "secured.sqlite"))))
+        try:
+            self.assertEqual(secured.post("/api/v1/chat", json={"thread_id": "auth", "message": "charger"}).status_code, 401)
+            self.assertEqual(secured.post("/api/v1/chat", headers={"Authorization": "Bearer viewer-token"}, json={"thread_id": "auth", "message": "charger"}).status_code, 200)
+            self.assertEqual(secured.post("/api/v1/chat", headers={"Authorization": "Bearer viewer-token"}, json={"thread_id": "auth-order", "message": "order ORD-10023 tracking 4821"}).status_code, 403)
+            self.assertEqual(secured.post("/api/v1/chat", headers={"Authorization": "Bearer support-token"}, json={"thread_id": "auth-order", "message": "order ORD-10023 tracking 4821"}).status_code, 200)
+        finally:
+            secured.app.state.agent.store.close()
+            secured.close()
+            if previous_required is None: os.environ.pop("COMMERCE_AUTH_REQUIRED", None)
+            else: os.environ["COMMERCE_AUTH_REQUIRED"] = previous_required
+            if previous_tokens is None: os.environ.pop("COMMERCE_DEMO_TOKENS", None)
+            else: os.environ["COMMERCE_DEMO_TOKENS"] = previous_tokens
 
 
 if __name__ == "__main__":

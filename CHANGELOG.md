@@ -11,6 +11,11 @@
 ### CI
 
 - Added GitLab CI jobs for unit/API/graph regression, deterministic evaluation, isolated PostgreSQL repository tests, and Docker Compose restart-persistence smoke checks.
+- Added JUnit and JSON evaluation report artifacts for GitLab pipeline review.
+
+### Synthetic identity and authorization
+
+- Added environment-only synthetic Bearer token authentication with viewer, support, and operator roles; no real identity provider or user data is connected.
 
 ### Added
 

@@ -8,6 +8,10 @@ Run local regression with `python -m unittest discover -s tests -p "test_*.py" -
 
 GitLab CI automatically runs fast regression/evaluation and an isolated PostgreSQL Repository suite. An optional manual Docker Compose smoke validates API-restart persistence; it requires a GitLab Runner that permits Docker-in-Docker privileged mode.
 
+## Synthetic authentication
+
+Local development is open by default. Set `COMMERCE_AUTH_REQUIRED=true` to require `Authorization: Bearer <synthetic-token>`, then supply `COMMERCE_DEMO_TOKENS` only through deployment/CI environment variables as a JSON map whose records contain `subject` and one of `viewer`, `support`, or `operator`. Do not commit a token map or real identity data. Viewers can use product/policy queries; order lookup and simulated ticket creation require `support` or `operator` and still require the existing order suffix/idempotency checks.
+
 独立的 3C Commerce Operations Agent 仓库。本轮交付一个可本地运行、仅使用脱敏模拟数据的后端纵向切片；不连接真实商家生产系统。
 
 ## 当前实现
