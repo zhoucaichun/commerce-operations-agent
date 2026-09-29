@@ -837,6 +837,41 @@ textarea {
   font-size: 14px;
 }
 
+.agent-result-card {
+  margin: 10px 0 18px auto;
+  max-width: 620px;
+  border: 1px solid #b8ddd3;
+  border-radius: 14px;
+  background: #f1faf7;
+  padding: 14px 16px;
+  color: #193d36;
+}
+
+.agent-result-card p {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.agent-result-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.agent-status {
+  border-radius: 999px;
+  background: #d4efe7;
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.agent-safety-note {
+  color: #4b615c;
+}
+
 .reco-section {
   margin-top: 16px;
 }

@@ -14,8 +14,8 @@ The new `/api/agent/chat` Next.js route is a server-side proxy. It reads `COMMER
 ## Integration sequence
 
 1. Keep the existing home page, start form, recommendation cards, and Dify route unchanged.
-2. Add intent routing in the copied chat page: recommendation questions remain on Dify; operations questions use `/api/agent/chat`.
-3. Render Agent results as order, policy, handoff, and simulated-ticket cards within the existing chat visual system.
+2. The copied `app/chat-demo/page.tsx` routes recommendation questions to Dify and operations questions to `/api/agent/chat`.
+3. Agent results render as structured operation cards within the existing chat visual system.
 4. Deploy the copied frontend only after an approved HTTPS endpoint is configured for the synthetic Commerce Agent.
 
 No route is allowed to invoke a real merchant production system or perform inventory, refund, cancellation, or address mutations.

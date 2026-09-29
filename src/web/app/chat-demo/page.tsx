@@ -17,6 +17,7 @@ type ChatMessage = {
   description?: string;
   isThinking?: boolean;
   recommendation?: ProductRecommendation | null;
+  agentResult?: AgentResponse | null;
 };
 
 type DifyResponse = {
@@ -27,12 +28,51 @@ type DifyResponse = {
   error?: string;
 };
 
+type AgentResponse = {
+  status?: string;
+  answer?: string;
+  request_id?: string;
+  thread_id?: string;
+  handoff?: { reason?: string; summary?: string } | null;
+  tool_result_summary?: Array<{ tool?: string }>;
+  detail?: string;
+  error?: string;
+};
+
 type StoredChatState = {
   messages: ChatMessage[];
   conversationId: string;
   inputText: string;
   liveRecommendation: ProductRecommendation | null;
 };
+
+const agentIntentPattern = /\b(order|tracking|shipment|policy|warranty|return|refund|ticket|human|compatib(?:ility|le))\b|订单|物流|包裹|轨迹|政策|保修|退货|退款|工单|人工|客服|兼容|适配/iu;
+
+function isAgentIntent(query: string) {
+  return agentIntentPattern.test(query);
+}
+
+function buildAgentPayload(query: string, threadId: string) {
+  const orderId = query.match(/\bORD-\d{4,}\b/i)?.[0]?.toUpperCase();
+  const suffixes = query.match(/(?<!\d)\d{4}(?!\d)/g) || [];
+  const slots: Record<string, string> = {};
+  if (orderId) slots.order_id = orderId;
+  if (suffixes.length) slots.identity_suffix = suffixes[suffixes.length - 1];
+  return { thread_id: threadId, message: query, slots };
+}
+
+async function requestAgent(query: string, threadId: string) {
+  const response = await fetch("/api/agent/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(buildAgentPayload(query, threadId))
+  });
+  const data = (await response.json()) as AgentResponse;
+  if (!response.ok) {
+    throw new Error(data.detail || data.error || `Commerce Agent request failed: ${response.status}`);
+  }
+  return data;
+}
 
 const starterQuestions = [
   "I use an iPhone 15 and want a charger under $25",
@@ -136,6 +176,14 @@ function buildErrorCopy(error: unknown) {
   };
 }
 
+function buildAgentErrorCopy(error: unknown) {
+  const detail = error instanceof Error ? error.message : "Unknown connection error.";
+  return {
+    message: "The operations agent could not complete this request.",
+    description: `${detail} No real order, inventory, refund, cancellation, or address action was performed.`
+  };
+}
+
 function buildDifyInputs(params: {
   query: string;
   country: string;
@@ -196,6 +244,22 @@ function buildRecommendationIntro(recommendation: ProductRecommendation) {
   }
 
   return `Sure. My best match is ${recommendation.name}.`;
+}
+
+function AgentResultCard({ result }: { result: AgentResponse }) {
+  const tools = (result.tool_result_summary || []).map((item) => item.tool).filter(Boolean);
+  return (
+    <section className="agent-result-card" aria-label="Commerce Agent result">
+      <div className="agent-result-heading">
+        <strong>Commerce Operations Agent</strong>
+        <span className="agent-status">{result.status || "completed"}</span>
+      </div>
+      {tools.length ? <p>Verified tools: {tools.join(", ")}</p> : null}
+      {result.handoff?.reason ? <p>Human handoff: {result.handoff.reason}</p> : null}
+      {result.handoff?.summary ? <p>{result.handoff.summary}</p> : null}
+      <p className="agent-safety-note">Synthetic-only result. No real merchant operation was performed.</p>
+    </section>
+  );
 }
 
 export default function ChatDemoPage() {
@@ -278,7 +342,7 @@ export default function ChatDemoPage() {
     }
 
     async function runInitialQuery() {
-      if (mockEnabled) {
+      if (mockEnabled && !isAgentIntent(initialQuery)) {
         setMessages([
           { role: "user", message: initialQuery, meta: "You | just now" },
           {
@@ -295,6 +359,20 @@ export default function ChatDemoPage() {
       }
 
       try {
+        if (isAgentIntent(initialQuery)) {
+          const agentResult = await requestAgent(initialQuery, `web-agent-${crypto.randomUUID()}`);
+          setLiveRecommendation(null);
+          setMessages([
+            { role: "user", message: initialQuery, meta: "You | just now" },
+            {
+              role: "ai",
+              message: agentResult.answer || "Commerce Agent returned successfully, but no answer text was found.",
+              meta: "Commerce Agent | just now",
+              agentResult
+            }
+          ]);
+          return;
+        }
         const response = await fetch("/api/dify/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -344,7 +422,7 @@ export default function ChatDemoPage() {
           }
         ]);
       } catch (error) {
-        const errorCopy = buildErrorCopy(error);
+        const errorCopy = isAgentIntent(initialQuery) ? buildAgentErrorCopy(error) : buildErrorCopy(error);
         setLiveRecommendation(null);
         setMessages([
           { role: "user", message: initialQuery, meta: "You | just now" },
@@ -402,6 +480,34 @@ export default function ChatDemoPage() {
       }
     ]);
     setIsSubmitting(true);
+
+    if (isAgentIntent(trimmed)) {
+      try {
+        const agentResult = await requestAgent(trimmed, `web-agent-${crypto.randomUUID()}`);
+        setMessages((current) => {
+          const next = [...current];
+          next.pop();
+          next.push({
+            role: "ai",
+            message: agentResult.answer || "Commerce Agent returned successfully, but no answer text was found.",
+            meta: "Commerce Agent | just now",
+            agentResult
+          });
+          return next;
+        });
+      } catch (error) {
+        const errorCopy = buildAgentErrorCopy(error);
+        setMessages((current) => {
+          const next = [...current];
+          next.pop();
+          next.push({ role: "ai", message: errorCopy.message, description: errorCopy.description, meta: "Commerce Agent | just now" });
+          return next;
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
 
     if (useMock) {
       setTimeout(() => {
@@ -576,6 +682,7 @@ export default function ChatDemoPage() {
                 meta={message.meta}
                 isThinking={message.isThinking}
               />
+              {message.agentResult ? <AgentResultCard result={message.agentResult} /> : null}
               {message.recommendation && !useMock ? (
                 <RecommendationCard
                   product={message.recommendation}

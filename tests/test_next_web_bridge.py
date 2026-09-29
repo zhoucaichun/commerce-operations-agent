@@ -16,6 +16,13 @@ class NextWebBridgeTests(unittest.TestCase):
         self.assertIn("COMMERCE_AGENT_API_BASE_URL", client)
         self.assertNotIn("NEXT_PUBLIC_COMMERCE_AGENT_DEMO_TOKEN", client)
 
+    def test_chat_page_routes_operations_to_agent_without_removing_dify(self):
+        page = (WEB / "app" / "chat-demo" / "page.tsx").read_text(encoding="utf-8")
+        self.assertIn('fetch("/api/dify/chat"', page)
+        self.assertIn('fetch("/api/agent/chat"', page)
+        self.assertIn("isAgentIntent", page)
+        self.assertIn("AgentResultCard", page)
+
 
 if __name__ == "__main__":
     unittest.main()

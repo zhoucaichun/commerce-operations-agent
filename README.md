@@ -10,7 +10,7 @@ The synthetic evaluation now runs 30 deterministic cases. The web UI includes a 
 
 ## Web interface
 
-The production-facing Next.js source baseline is in `src/web`. It is copied from the existing ShopPilot 3C frontend without modifying the AIPM source project. Its existing Dify recommendation proxy remains available, while the added server-side `/api/agent/chat` proxy is reserved for controlled Commerce Agent operations; see `docs/WEB_DUAL_ROUTING.md`.
+The production-facing Next.js source baseline is in `src/web`. It is copied from the existing ShopPilot 3C frontend without modifying the AIPM source project. Its chat page keeps Dify for recommendations and routes order, shipment, policy, compatibility, and handoff intents to the server-side `/api/agent/chat` proxy; see `docs/WEB_DUAL_ROUTING.md`.
 
 Open `http://127.0.0.1:8000/` after starting the API or Compose stack. The bundled frontend provides safe chat, optional order ID/suffix fields, simulated-ticket idempotency input, synthetic-token input, tool summaries, and explicit handoff results. It only calls the same-origin `/api/v1/chat` API and has no direct merchant-system integration.
 
