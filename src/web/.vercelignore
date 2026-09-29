@@ -1,0 +1,12 @@
+.env.local
+.env.*.local
+.next
+node_modules
+*.log
+*.err
+dev-server.err.log
+dev-server.out.log
+dev.err.log
+dev.log
+tmp-next.err.log
+tmp-next.out.log
