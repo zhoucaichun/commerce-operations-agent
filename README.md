@@ -14,6 +14,8 @@ The API sets CSP, `nosniff`, no-referrer and restrictive permissions headers. Th
 
 The UI supports native keyboard navigation, a skip link, visible focus, and Alt+1/Alt+2/Alt+3 presets. Production boundary and future OIDC design are documented in `docs/PRODUCTION.md` and `docs/IDENTITY_PROVIDER_DESIGN.md`; neither connects a real provider.
 
+Before a production deployment, run `python src/infra/validate_proxy_config.py --host <approved-dns-name>` and follow the certificate rotation runbook in `docs/PRODUCTION.md`.
+
 GitLab CI automatically runs fast regression/evaluation and an isolated PostgreSQL Repository suite. An optional manual Docker Compose smoke validates API-restart persistence; it requires a GitLab Runner that permits Docker-in-Docker privileged mode.
 
 ## Synthetic authentication

@@ -23,6 +23,7 @@
 - Added frontend endpoint and Compose smoke coverage; the web client only calls this repository's FastAPI endpoint.
 - Added browser E2E coverage, CSP and defensive browser response headers, plus explicit UI messaging for authentication, permission, idempotency, validation and rate-limit failures.
 - Added keyboard navigation, skip link and focus styles, plus a TLS reverse-proxy template, secret-handling template, and non-implemented OIDC design documentation.
+- Added automated Nginx template validation, a certificate rotation/rollback runbook, and an approval-gated OIDC rollout decision record.
 
 ### Added
 
