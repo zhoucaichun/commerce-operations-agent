@@ -1,4 +1,7 @@
 const $ = (selector) => document.querySelector(selector);
+const historyKey = "commerce-agent-synthetic-history";
+const renderHistory = () => { const items = JSON.parse(localStorage.getItem(historyKey) || "[]"); $("#history").innerHTML = items.length ? items.map((item) => `<li>${item.status}：${item.summary}</li>`).join("") : "<li>暂无</li>"; };
+$("#clear-history").addEventListener("click", () => { localStorage.removeItem(historyKey); renderHistory(); }); renderHistory();
 const presets = {
   product: { message: "charger" },
   order: { message: "order ORD-10023 tracking 4821", orderId: "ORD-10023", suffix: "4821" },
@@ -53,6 +56,7 @@ $("#chat-form").addEventListener("submit", async (event) => {
     $("#status").textContent = data.status;
     $("#answer").textContent = data.answer;
     $("#trace").textContent = JSON.stringify({ tools: data.tool_result_summary, handoff: data.handoff, trace: data.trace }, null, 2);
+    const items = JSON.parse(localStorage.getItem(historyKey) || "[]"); localStorage.setItem(historyKey, JSON.stringify([{ status: data.status, summary: data.answer.slice(0, 80) }, ...items].slice(0, 10))); renderHistory();
   } catch (error) {
     $("#status").textContent = "请求失败";
     $("#answer").textContent = `未执行任何真实操作：${error.message}`;

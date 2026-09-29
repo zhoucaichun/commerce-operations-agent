@@ -34,8 +34,7 @@ class SQLiteStore(InMemoryStore):
         with self._db_lock:
             rows = self._connection.execute("SELECT name, value FROM metrics").fetchall()
         for row in rows:
-            if row["name"] in self._metrics:
-                self._metrics[row["name"]] = int(row["value"])
+            self._metrics[row["name"]] = int(row["value"])
 
     def session(self, thread_id: str) -> dict[str, Any]:
         with self._db_lock:

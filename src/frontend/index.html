@@ -38,6 +38,7 @@
         <p id="answer">提交问题后，这里会显示受控工具验证后的答复或人工接管原因。</p>
         <details><summary>工具与流程摘要</summary><pre id="trace">尚无执行记录</pre></details>
       </section>
+      <section class="card" aria-labelledby="history-title"><h2 id="history-title">本地会话历史</h2><ul id="history"><li>暂无</li></ul><button id="clear-history" type="button">清空本地历史</button></section>
       <section class="card" aria-labelledby="metrics-title"><h2 id="metrics-title">合成运营摘要</h2><p id="metrics">加载中</p><div class="grid"><div><h3>工具调用</h3><ul id="tool-metrics"></ul></div><div><h3>人工接管原因</h3><ul id="handoff-metrics"></ul></div><div><h3>失败类型</h3><ul id="failure-metrics"><li>暂无</li></ul></div><div><h3>最近接管趋势</h3><ol id="recent-handoffs"></ol></div></div><button id="refresh-metrics" type="button">刷新指标</button></section>
     </main>
     <script src="/assets/app.js"></script>

@@ -22,7 +22,7 @@ BASE_CASES = (
     ("ticket-needs-key", {"thread_id": "eval-ticket", "message": "create a human support ticket"}, "needs_input"),
     ("risk-handoff", {"thread_id": "eval-risk", "message": "refund please"}, "handoff"),
 )
-CASES = tuple((f"{name}-{index}", {**payload, "thread_id": f"{payload['thread_id']}-{index}"}, expected) for index in range(1, 5) for name, payload, expected in BASE_CASES) + BASE_CASES[:2]
+CASES = tuple((f"{name}-{index}", {**payload, "thread_id": f"{payload['thread_id']}-{index}"}, expected) for index in range(1, 13) for name, payload, expected in BASE_CASES) + BASE_CASES[:2]
 
 
 def main() -> None:
