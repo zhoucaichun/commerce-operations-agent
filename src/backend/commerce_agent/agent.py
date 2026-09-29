@@ -106,6 +106,7 @@ class CommerceAgent:
         except ValidationError:
             raise
         except (ToolError, KeyError) as exc:
+            self.store.increment(f"failure:{type(exc).__name__}")
             handoff = self._handoff(
                 self.store,
                 trace,

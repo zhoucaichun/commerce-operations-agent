@@ -87,6 +87,7 @@ def create_app(agent_instance: CommerceAgent | None = None) -> FastAPI:
         try:
             domain_request = ChatRequest.from_dict(payload.model_dump())
         except ValidationError as exc:
+            request.app.state.agent.store.increment("failure:ValidationError")
             raise HTTPException(status_code=422, detail=str(exc)) from exc
         try:
             principal = request.app.state.authenticator.authenticate(authorization)
@@ -94,11 +95,14 @@ def create_app(agent_instance: CommerceAgent | None = None) -> FastAPI:
             required_role = "support" if request.app.state.agent._is_order_intent(message) or request.app.state.agent._is_ticket_intent(message) else "viewer"
             request.app.state.authenticator.authorize(principal, required_role)
         except AuthenticationError as exc:
+            request.app.state.agent.store.increment("failure:AuthenticationError")
             raise HTTPException(status_code=401, detail=str(exc)) from exc
         except PermissionError as exc:
+            request.app.state.agent.store.increment("failure:PermissionError")
             raise HTTPException(status_code=403, detail=str(exc)) from exc
         guard = request.app.state.redis_health
         if not guard.allow(domain_request.thread_id):
+            request.app.state.agent.store.increment("failure:RateLimitExceeded")
             raise HTTPException(status_code=429, detail="rate limit exceeded")
         locked = False
         if domain_request.idempotency_key:
