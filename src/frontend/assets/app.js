@@ -5,6 +5,17 @@ const presets = {
   handoff: { message: "create a human support ticket", key: "demo-ticket-001" },
 };
 
+const errorMessage = (status, detail) => {
+  const messages = {
+    401: "身份验证未通过：请提供有效的合成 Bearer Token。",
+    403: "当前合成角色没有执行此查询的权限。",
+    409: "相同幂等请求正在处理中，请稍后重试。",
+    422: "输入校验未通过：请检查会话 ID、订单信息和幂等键格式。",
+    429: "请求过于频繁，请稍后再试。",
+  };
+  return `${messages[status] || "请求未完成。"}${detail ? ` ${detail}` : ""}`;
+};
+
 document.querySelectorAll("[data-preset]").forEach((button) => button.addEventListener("click", () => {
   const preset = presets[button.dataset.preset];
   $("#message").value = preset.message;
@@ -26,7 +37,7 @@ $("#chat-form").addEventListener("submit", async (event) => {
   try {
     const response = await fetch("/api/v1/chat", { method: "POST", headers, body: JSON.stringify(body) });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
+    if (!response.ok) throw new Error(errorMessage(response.status, data.detail));
     $("#status").textContent = data.status;
     $("#answer").textContent = data.answer;
     $("#trace").textContent = JSON.stringify({ tools: data.tool_result_summary, handoff: data.handoff, trace: data.trace }, null, 2);

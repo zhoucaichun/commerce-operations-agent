@@ -2,6 +2,22 @@ stages:
   - verify
   - integration
 
+web_e2e:
+  stage: integration
+  image: mcr.microsoft.com/playwright:v1.58.2-noble
+  before_script:
+    - python3 -m pip install --no-cache-dir -r src/backend/requirements.txt
+    - cd tests/e2e && npm ci
+  script:
+    - cd tests/e2e && npm test
+  artifacts:
+    when: always
+    paths:
+      - tests/e2e/test-results/
+  rules:
+    - when: manual
+      allow_failure: true
+
 default:
   interruptible: true
 

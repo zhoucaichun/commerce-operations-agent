@@ -10,6 +10,8 @@ Run local regression with `python -m unittest discover -s tests -p "test_*.py" -
 
 Open `http://127.0.0.1:8000/` after starting the API or Compose stack. The bundled frontend provides safe chat, optional order ID/suffix fields, simulated-ticket idempotency input, synthetic-token input, tool summaries, and explicit handoff results. It only calls the same-origin `/api/v1/chat` API and has no direct merchant-system integration.
 
+The API sets CSP, `nosniff`, no-referrer and restrictive permissions headers. The UI explains authentication (401), permission (403), duplicate (409), validation (422), and rate-limit (429) responses without claiming that a real action occurred. Run browser E2E locally with `cd tests/e2e; npm ci; npm test` (Windows uses installed Edge; CI uses Playwright Chromium).
+
 GitLab CI automatically runs fast regression/evaluation and an isolated PostgreSQL Repository suite. An optional manual Docker Compose smoke validates API-restart persistence; it requires a GitLab Runner that permits Docker-in-Docker privileged mode.
 
 ## Synthetic authentication
