@@ -110,8 +110,7 @@ class InMemoryStore:
 
     def increment(self, metric: str) -> None:
         with self._lock:
-            if metric in self._metrics:
-                self._metrics[metric] += 1
+            self._metrics[metric] = self._metrics.get(metric, 0) + 1
 
     def metrics(self) -> dict[str, int]:
         with self._lock:

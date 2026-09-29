@@ -334,6 +334,7 @@ class CommerceAgent:
     @staticmethod
     def _handoff(store, trace, request_id, thread_id, reason, summary, error_code=None):
         store.increment("handoffs")
+        store.increment(f"handoff:{reason}")
         CommerceAgent._trace(trace, request_id, thread_id, "human_review", reason, error_code)
         return {"required": True, "reason": reason, "summary": summary}
 

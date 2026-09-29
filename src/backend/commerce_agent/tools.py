@@ -77,6 +77,7 @@ class ToolRegistry:
         if definition.requires_idempotency and not idempotency_key:
             raise ToolError("idempotency_key is required for simulated writes")
         self.store.increment("tool_calls")
+        self.store.increment(f"tool:{name}")
         if definition.requires_idempotency:
             arguments = {**arguments, "idempotency_key": idempotency_key}
         return definition.handler(arguments)
