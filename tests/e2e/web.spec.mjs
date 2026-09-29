@@ -17,3 +17,12 @@ test("web flow explains an authentication failure", async ({ page }) => {
   await expect(page.locator("#status")).toHaveText("请求失败");
   await expect(page.locator("#answer")).toContainText("身份验证未通过");
 });
+
+test("keyboard navigation exposes skip link and preset shortcut", async ({ page }) => {
+  await page.goto("/");
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("link", { name: "跳至安全查询表单" })).toBeFocused();
+  await page.keyboard.press("Alt+1");
+  await expect(page.locator("#message")).toHaveValue("charger");
+  await expect(page.locator("#message")).toBeFocused();
+});

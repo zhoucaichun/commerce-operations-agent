@@ -24,6 +24,15 @@ document.querySelectorAll("[data-preset]").forEach((button) => button.addEventLi
   $("#idempotency-key").value = preset.key || "";
 }));
 
+document.addEventListener("keydown", (event) => {
+  if (!event.altKey || event.ctrlKey || event.metaKey) return;
+  const preset = { "1": "product", "2": "order", "3": "handoff" }[event.key];
+  if (!preset) return;
+  event.preventDefault();
+  document.querySelector(`[data-preset="${preset}"]`).click();
+  $("#message").focus();
+});
+
 $("#chat-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const slots = {};

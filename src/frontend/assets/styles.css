@@ -1,8 +1,10 @@
 :root { color-scheme: light; font-family: Inter, "Microsoft YaHei", sans-serif; color: #102030; background: #f2f6fa; }
 * { box-sizing: border-box; } body { margin: 0; } .shell { max-width: 880px; margin: 0 auto; padding: 42px 20px 64px; }
+.skip-link { position: fixed; left: 12px; top: -50px; z-index: 2; padding: 8px; background: #102030; color: #fff; border-radius: 6px; } .skip-link:focus { top: 12px; }
 header { margin-bottom: 24px; } h1 { margin: 4px 0 12px; font-size: clamp(1.8rem, 4vw, 2.7rem); } h2 { margin-top: 0; } .eyebrow { color: #126a58; font-weight: 700; letter-spacing: .1em; font-size: .75rem; }
 .card { background: #fff; border: 1px solid #dbe4ed; border-radius: 14px; padding: 24px; margin: 18px 0; box-shadow: 0 5px 18px #172a3a0d; } label { display: grid; gap: 7px; font-weight: 600; }
 textarea, input { width: 100%; border: 1px solid #b8c8d8; border-radius: 8px; padding: 10px; font: inherit; font-weight: 400; } textarea { min-height: 108px; resize: vertical; } .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 16px 0; }
 button { border: 1px solid #9bb2c6; border-radius: 8px; background: #fff; cursor: pointer; padding: 9px 12px; font: inherit; } button:hover { background: #edf6f4; } .primary { background: #126a58; border-color: #126a58; color: #fff; font-weight: 700; } .presets { display: flex; gap: 8px; margin: 0 0 15px; flex-wrap: wrap; }
+button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible, a:focus-visible { outline: 3px solid #f09b33; outline-offset: 3px; }
 .result-heading { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; } #status { border-radius: 99px; background: #e8eef5; padding: 4px 10px; font-size: .85rem; } pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #f6f8fa; padding: 12px; border-radius: 8px; }
 @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } .shell { padding-top: 24px; } }

@@ -12,6 +12,8 @@ Open `http://127.0.0.1:8000/` after starting the API or Compose stack. The bundl
 
 The API sets CSP, `nosniff`, no-referrer and restrictive permissions headers. The UI explains authentication (401), permission (403), duplicate (409), validation (422), and rate-limit (429) responses without claiming that a real action occurred. Run browser E2E locally with `cd tests/e2e; npm ci; npm test` (Windows uses installed Edge; CI uses Playwright Chromium).
 
+The UI supports native keyboard navigation, a skip link, visible focus, and Alt+1/Alt+2/Alt+3 presets. Production boundary and future OIDC design are documented in `docs/PRODUCTION.md` and `docs/IDENTITY_PROVIDER_DESIGN.md`; neither connects a real provider.
+
 GitLab CI automatically runs fast regression/evaluation and an isolated PostgreSQL Repository suite. An optional manual Docker Compose smoke validates API-restart persistence; it requires a GitLab Runner that permits Docker-in-Docker privileged mode.
 
 ## Synthetic authentication
