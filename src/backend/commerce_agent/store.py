@@ -15,6 +15,7 @@ class InMemoryStore:
         self._sessions: dict[str, dict[str, Any]] = {}
         self._tickets: dict[str, dict[str, Any]] = {}
         self._ticket_counter = 0
+        self._handoff_events: list[str] = []
         self._metrics = {"chat_requests": 0, "tool_calls": 0, "handoffs": 0, "completed": 0, "needs_input": 0}
 
         self.products = [
@@ -115,3 +116,11 @@ class InMemoryStore:
     def metrics(self) -> dict[str, int]:
         with self._lock:
             return dict(self._metrics)
+
+    def record_handoff(self, reason: str) -> None:
+        with self._lock:
+            self._handoff_events = ([*self._handoff_events, reason])[-20:]
+
+    def recent_handoffs(self) -> list[str]:
+        with self._lock:
+            return list(reversed(self._handoff_events))

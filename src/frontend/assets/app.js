@@ -16,7 +16,7 @@ const errorMessage = (status, detail) => {
   return `${messages[status] || "请求未完成。"}${detail ? ` ${detail}` : ""}`;
 };
 const renderGroup = (id, data, prefix) => { const items = Object.entries(data).filter(([key]) => key.startsWith(prefix)); $(id).innerHTML = items.length ? items.map(([key, value]) => `<li>${key.slice(prefix.length)}：${value}</li>`).join("") : "<li>暂无</li>"; };
-const refreshMetrics = async () => { const r = await fetch("/metrics"); const m = await r.json(); $("#metrics").textContent = `请求 ${m.chat_requests}｜完成 ${m.completed}｜人工接管 ${m.handoffs}｜工具/请求 ${m.tool_calls_per_chat}`; renderGroup("#tool-metrics", m, "tool:"); renderGroup("#handoff-metrics", m, "handoff:"); };
+const refreshMetrics = async () => { const r = await fetch("/metrics"); const m = await r.json(); $("#metrics").textContent = `请求 ${m.chat_requests}｜完成 ${m.completed}｜人工接管 ${m.handoffs}｜工具/请求 ${m.tool_calls_per_chat}`; renderGroup("#tool-metrics", m, "tool:"); renderGroup("#handoff-metrics", m, "handoff:"); renderGroup("#failure-metrics", m, "failure:"); $("#recent-handoffs").innerHTML = (m.recent_handoffs || []).map((reason) => `<li>${reason}</li>`).join("") || "<li>暂无</li>"; };
 $("#refresh-metrics").addEventListener("click", refreshMetrics); refreshMetrics();
 
 document.querySelectorAll("[data-preset]").forEach((button) => button.addEventListener("click", () => {
