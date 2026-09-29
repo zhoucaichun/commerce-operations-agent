@@ -6,6 +6,7 @@
 
 - Expanded deterministic synthetic evaluation to 30 cases and added completed/needs-input metrics plus derived handoff and tool-call rates.
 - Added a read-only frontend operations summary; it contains only synthetic runtime counters.
+- Added UTC hourly cumulative metric snapshots persisted by SQLite and opt-in PostgreSQL stores, with recent snapshot buckets in the dashboard.
 
 ### LangGraph and state resilience
 
@@ -25,6 +26,7 @@
 ### Web MVP
 
 - Added a dependency-free, API-hosted frontend for safe chat, order lookup inputs, simulated ticket creation, trace summaries, and human-handoff presentation.
+- Added synthetic order/ticket detail cards and same-request retry for recoverable errors; neither path can trigger a real merchant mutation.
 - Added frontend endpoint and Compose smoke coverage; the web client only calls this repository's FastAPI endpoint.
 - Added browser E2E coverage, CSP and defensive browser response headers, plus explicit UI messaging for authentication, permission, idempotency, validation and rate-limit failures.
 - Added keyboard navigation, skip link and focus styles, plus a TLS reverse-proxy template, secret-handling template, and non-implemented OIDC design documentation.

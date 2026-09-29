@@ -7,4 +7,5 @@ textarea, input { width: 100%; border: 1px solid #b8c8d8; border-radius: 8px; pa
 button { border: 1px solid #9bb2c6; border-radius: 8px; background: #fff; cursor: pointer; padding: 9px 12px; font: inherit; } button:hover { background: #edf6f4; } .primary { background: #126a58; border-color: #126a58; color: #fff; font-weight: 700; } .presets { display: flex; gap: 8px; margin: 0 0 15px; flex-wrap: wrap; }
 button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible, a:focus-visible { outline: 3px solid #f09b33; outline-offset: 3px; }
 .result-heading { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; } #status { border-radius: 99px; background: #e8eef5; padding: 4px 10px; font-size: .85rem; } pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #f6f8fa; padding: 12px; border-radius: 8px; }
+.detail-card { background: #f6f8fa; border-left: 4px solid #126a58; border-radius: 6px; padding: 12px; margin-bottom: 12px; white-space: pre-line; }
 @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } .shell { padding-top: 24px; } }

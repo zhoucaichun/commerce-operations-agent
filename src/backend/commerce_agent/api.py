@@ -78,9 +78,11 @@ def create_app(agent_instance: CommerceAgent | None = None) -> FastAPI:
 
     @app.get("/metrics")
     def metrics(request: Request) -> dict[str, Any]:
-        metrics = request.app.state.agent.store.metrics()
+        store = request.app.state.agent.store
+        store.snapshot_metrics()
+        metrics = store.metrics()
         chats = metrics["chat_requests"]
-        return {"service": "commerce-agent", **metrics, "handoff_rate": round(metrics["handoffs"] / chats, 4) if chats else 0, "tool_calls_per_chat": round(metrics["tool_calls"] / chats, 2) if chats else 0, "recent_handoffs": request.app.state.agent.store.recent_handoffs()}
+        return {"service": "commerce-agent", **metrics, "handoff_rate": round(metrics["handoffs"] / chats, 4) if chats else 0, "tool_calls_per_chat": round(metrics["tool_calls"] / chats, 2) if chats else 0, "recent_handoffs": store.recent_handoffs(), "metric_snapshots": store.metric_snapshots()}
 
     @app.post("/api/v1/chat")
     def chat(payload: ChatPayload, request: Request, authorization: str | None = Header(default=None), x_request_id: str | None = Header(default=None)) -> JSONResponse:

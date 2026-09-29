@@ -6,7 +6,7 @@ The runnable MVP uses FastAPI, PostgreSQL-backed synthetic state in Compose, Red
 
 Run local regression with `python -m unittest discover -s tests -p "test_*.py" -v` and `python src/eval/run_smoke.py`. For the isolated Compose integration check, start Compose and run `python src/eval/run_compose_smoke.py --restart-api`.
 
-The synthetic evaluation now runs 30 deterministic cases. The web UI includes a read-only synthetic operations summary from `/metrics`.
+The synthetic evaluation now runs 30 deterministic cases. The web UI includes a read-only synthetic operations summary from `/metrics`, UTC hourly cumulative snapshots, synthetic order/ticket detail cards, and same-request retry for recoverable failures.
 
 ## Web interface
 

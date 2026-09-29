@@ -42,6 +42,11 @@ class FastApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers["X-Request-ID"], "api-request-001")
         self.assertEqual(response.json()["request_id"], "api-request-001")
+        metrics = self.client.get("/metrics").json()
+        self.assertTrue(metrics["metric_snapshots"])
+        self.assertIn("chat_requests", metrics["metric_snapshots"][-1])
+        self.assertIn("订单与工单详情", page.text)
+        self.assertIn("重试上次安全查询", page.text)
 
     def test_schema_rejects_unknown_fields_and_risk_is_handed_off(self):
         invalid = self.client.post("/api/v1/chat", json={"thread_id": "x", "message": "hi", "unknown": True})

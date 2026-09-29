@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from datetime import datetime, timezone
 from threading import RLock
 from typing import Any
 
@@ -17,6 +18,7 @@ class InMemoryStore:
         self._ticket_counter = 0
         self._handoff_events: list[str] = []
         self._metrics = {"chat_requests": 0, "tool_calls": 0, "handoffs": 0, "completed": 0, "needs_input": 0}
+        self._metric_snapshots: dict[str, dict[str, int]] = {}
 
         self.products = [
             {
@@ -116,6 +118,17 @@ class InMemoryStore:
     def metrics(self) -> dict[str, int]:
         with self._lock:
             return dict(self._metrics)
+
+    def snapshot_metrics(self) -> None:
+        """Store a UTC hourly cumulative counter snapshot for the synthetic dashboard."""
+        bucket = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0).isoformat()
+        with self._lock:
+            self._metric_snapshots[bucket] = dict(self._metrics)
+
+    def metric_snapshots(self, limit: int = 24) -> list[dict[str, Any]]:
+        with self._lock:
+            buckets = sorted(self._metric_snapshots)[-limit:]
+            return [{"bucket": bucket, **self._metric_snapshots[bucket]} for bucket in buckets]
 
     def record_handoff(self, reason: str) -> None:
         with self._lock:

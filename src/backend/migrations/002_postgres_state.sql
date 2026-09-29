@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS commerce_sessions (thread_id TEXT PRIMARY KEY, payload JSONB NOT NULL);
 CREATE TABLE IF NOT EXISTS commerce_tickets (idempotency_key TEXT PRIMARY KEY, payload JSONB NOT NULL);
 CREATE TABLE IF NOT EXISTS commerce_metrics (name TEXT PRIMARY KEY, value BIGINT NOT NULL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS commerce_metric_snapshots (bucket TIMESTAMPTZ NOT NULL, name TEXT NOT NULL, value BIGINT NOT NULL, PRIMARY KEY (bucket, name));
 CREATE TABLE IF NOT EXISTS commerce_products (sku TEXT PRIMARY KEY, payload JSONB NOT NULL);
 CREATE TABLE IF NOT EXISTS commerce_policies (policy_id TEXT PRIMARY KEY, payload JSONB NOT NULL);
 CREATE TABLE IF NOT EXISTS commerce_orders (order_id TEXT PRIMARY KEY, payload JSONB NOT NULL);

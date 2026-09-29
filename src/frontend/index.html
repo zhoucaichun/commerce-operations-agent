@@ -12,14 +12,14 @@
       <header>
         <p class="eyebrow">SYNTHETIC-ONLY MVP</p>
         <h1>3C Commerce Operations Agent</h1>
-        <p>商品、订单与政策均为脱敏模拟数据。不会退款、取消订单、扣减库存或修改真实地址。</p>
+        <p>商品、订单和政策均为脱敏合成数据。不会退款、取消订单、扣减库存或修改真实地址。</p>
       </header>
       <section class="card" aria-labelledby="chat-title">
         <h2 id="chat-title">对话与订单查询</h2>
         <div class="presets" aria-label="快捷示例">
-          <button data-preset="product">查询商品</button>
-          <button data-preset="order">查询订单</button>
-          <button data-preset="handoff">转人工</button>
+          <button data-preset="product" type="button">查询商品</button>
+          <button data-preset="order" type="button">查询订单</button>
+          <button data-preset="handoff" type="button">转人工</button>
         </div>
         <form id="chat-form" aria-describedby="form-help">
           <p id="form-help">可用 Tab 在控件间导航；Alt+1、Alt+2、Alt+3 分别载入商品、订单和人工接管示例。</p>
@@ -28,7 +28,7 @@
             <label>订单号（可选）<input id="order-id" placeholder="ORD-10023"></label>
             <label>身份后四位（可选）<input id="identity-suffix" inputmode="numeric" maxlength="4" placeholder="4821"></label>
             <label>工单幂等键（仅创建模拟工单）<input id="idempotency-key" minlength="8" placeholder="demo-ticket-001"></label>
-            <label>合成 Bearer Token（启用认证时）<input id="token" type="password" autocomplete="off" placeholder="不填则本地开发模式"></label>
+            <label>合成 Bearer Token（启用认证时）<input id="token" type="password" autocomplete="off" placeholder="本地开发模式可留空"></label>
           </div>
           <button class="primary" type="submit">提交安全查询</button>
         </form>
@@ -38,8 +38,13 @@
         <p id="answer">提交问题后，这里会显示受控工具验证后的答复或人工接管原因。</p>
         <details><summary>工具与流程摘要</summary><pre id="trace">尚无执行记录</pre></details>
       </section>
+      <section class="card" aria-labelledby="detail-title">
+        <h2 id="detail-title">订单与工单详情</h2>
+        <div id="detail-card" class="detail-card" aria-live="polite">尚无订单或工单详情。</div>
+        <button id="retry" type="button" hidden>重试上次安全查询</button>
+      </section>
       <section class="card" aria-labelledby="history-title"><h2 id="history-title">本地会话历史</h2><ul id="history"><li>暂无</li></ul><button id="clear-history" type="button">清空本地历史</button></section>
-      <section class="card" aria-labelledby="metrics-title"><h2 id="metrics-title">合成运营摘要</h2><p id="metrics">加载中</p><div class="grid"><div><h3>工具调用</h3><ul id="tool-metrics"></ul></div><div><h3>人工接管原因</h3><ul id="handoff-metrics"></ul></div><div><h3>失败类型</h3><ul id="failure-metrics"><li>暂无</li></ul></div><div><h3>最近接管趋势</h3><ol id="recent-handoffs"></ol></div></div><button id="refresh-metrics" type="button">刷新指标</button></section>
+      <section class="card" aria-labelledby="metrics-title"><h2 id="metrics-title">合成运营摘要</h2><p id="metrics">加载中</p><p id="metric-trend">尚无时间快照</p><div class="grid"><div><h3>工具调用</h3><ul id="tool-metrics"></ul></div><div><h3>人工接管原因</h3><ul id="handoff-metrics"></ul></div><div><h3>失败类型</h3><ul id="failure-metrics"><li>暂无</li></ul></div><div><h3>最近接管趋势</h3><ol id="recent-handoffs"></ol></div></div><button id="refresh-metrics" type="button">刷新指标</button></section>
     </main>
     <script src="/assets/app.js"></script>
   </body>

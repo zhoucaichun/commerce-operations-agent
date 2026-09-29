@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from datetime import datetime, timezone
 import json
 from pathlib import Path
 import sqlite3
@@ -71,6 +72,26 @@ class SQLiteStore(InMemoryStore):
             with self._db_lock:
                 self._connection.execute("INSERT INTO metrics(name, value) VALUES(?, 1) ON CONFLICT(name) DO UPDATE SET value = value + 1", (metric,))
                 self._connection.commit()
+
+    def snapshot_metrics(self) -> None:
+        bucket = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0).isoformat()
+        with self._db_lock:
+            self._connection.executemany(
+                "INSERT INTO metric_snapshots(bucket, name, value) VALUES(?, ?, ?) ON CONFLICT(bucket, name) DO UPDATE SET value = excluded.value",
+                [(bucket, name, value) for name, value in self.metrics().items()],
+            )
+            self._connection.commit()
+
+    def metric_snapshots(self, limit: int = 24) -> list[dict[str, Any]]:
+        with self._db_lock:
+            rows = self._connection.execute(
+                "SELECT bucket, name, value FROM metric_snapshots WHERE bucket IN (SELECT DISTINCT bucket FROM metric_snapshots ORDER BY bucket DESC LIMIT ?) ORDER BY bucket",
+                (limit,),
+            ).fetchall()
+        snapshots: dict[str, dict[str, Any]] = {}
+        for row in rows:
+            snapshots.setdefault(row["bucket"], {"bucket": row["bucket"]})[row["name"]] = int(row["value"])
+        return list(snapshots.values())
 
     def ready(self) -> bool:
         with self._db_lock:

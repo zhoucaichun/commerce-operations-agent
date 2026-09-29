@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from datetime import datetime, timezone
 import json
 from pathlib import Path
 from typing import Any
@@ -47,6 +48,25 @@ class PostgresStore(InMemoryStore):
         super().increment(metric)
         if metric in self._metrics:
             self.connection.execute("INSERT INTO commerce_metrics(name,value) VALUES(%s,1) ON CONFLICT(name) DO UPDATE SET value=commerce_metrics.value+1", (metric,))
+
+    def snapshot_metrics(self) -> None:
+        bucket = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
+        for name, value in self.metrics().items():
+            self.connection.execute(
+                "INSERT INTO commerce_metric_snapshots(bucket,name,value) VALUES(%s,%s,%s) ON CONFLICT(bucket,name) DO UPDATE SET value=EXCLUDED.value",
+                (bucket, name, value),
+            )
+
+    def metric_snapshots(self, limit: int = 24) -> list[dict[str, Any]]:
+        rows = self.connection.execute(
+            "SELECT bucket, name, value FROM commerce_metric_snapshots WHERE bucket IN (SELECT DISTINCT bucket FROM commerce_metric_snapshots ORDER BY bucket DESC LIMIT %s) ORDER BY bucket",
+            (limit,),
+        ).fetchall()
+        snapshots: dict[str, dict[str, Any]] = {}
+        for bucket, name, value in rows:
+            key = bucket.isoformat()
+            snapshots.setdefault(key, {"bucket": key})[name] = int(value)
+        return list(snapshots.values())
 
     def ready(self) -> bool:
         self.connection.execute("SELECT 1").fetchone()
