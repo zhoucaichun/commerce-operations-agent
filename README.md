@@ -16,6 +16,8 @@ The UI supports native keyboard navigation, a skip link, visible focus, and Alt+
 
 Before a production deployment, run `python src/infra/validate_proxy_config.py --host <approved-dns-name>` and follow the certificate rotation runbook in `docs/PRODUCTION.md`.
 
+OIDC sandbox activation requires an external written security approval; use `docs/SECURITY_APPROVAL_CHECKLIST.md` as the required evidence checklist. This repository cannot grant that approval.
+
 GitLab CI automatically runs fast regression/evaluation and an isolated PostgreSQL Repository suite. An optional manual Docker Compose smoke validates API-restart persistence; it requires a GitLab Runner that permits Docker-in-Docker privileged mode.
 
 ## Synthetic authentication

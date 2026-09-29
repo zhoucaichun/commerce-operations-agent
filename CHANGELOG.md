@@ -25,6 +25,7 @@
 - Added keyboard navigation, skip link and focus styles, plus a TLS reverse-proxy template, secret-handling template, and non-implemented OIDC design documentation.
 - Added automated Nginx template validation, a certificate rotation/rollback runbook, and an approval-gated OIDC rollout decision record.
 - Added CI checks for Nginx template validation and production-document safety guidance.
+- Added an explicit external security-approval checklist that blocks OIDC sandbox activation until signed outside the repository.
 
 ### Added
 
