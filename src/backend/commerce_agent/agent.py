@@ -128,6 +128,7 @@ class CommerceAgent:
         state["step_count"] = min(MAX_STEPS, state.get("step_count", 0) + len(summaries))
         state["messages"].append({"role": "assistant", "status": response.status})
         self._save_state(request.thread_id, state)
+        self.store.increment(response.status)
         return response
 
     def _load_state(self, thread_id: str) -> dict[str, Any]:

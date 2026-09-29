@@ -13,7 +13,7 @@ sys.path.insert(0, str(BACKEND))
 from commerce_agent.agent import CommerceAgent
 from commerce_agent.models import ChatRequest
 
-CASES = (
+BASE_CASES = (
     ("product", {"thread_id": "eval-product", "message": "charger"}, "completed"),
     ("compatibility", {"thread_id": "eval-compat", "message": "AC-65W compatible MacBook Pro 14"}, "completed"),
     ("policy", {"thread_id": "eval-policy", "message": "warranty policy"}, "completed"),
@@ -22,6 +22,7 @@ CASES = (
     ("ticket-needs-key", {"thread_id": "eval-ticket", "message": "create a human support ticket"}, "needs_input"),
     ("risk-handoff", {"thread_id": "eval-risk", "message": "refund please"}, "handoff"),
 )
+CASES = tuple((f"{name}-{index}", {**payload, "thread_id": f"{payload['thread_id']}-{index}"}, expected) for index in range(1, 5) for name, payload, expected in BASE_CASES) + BASE_CASES[:2]
 
 
 def main() -> None:

@@ -15,7 +15,7 @@ class InMemoryStore:
         self._sessions: dict[str, dict[str, Any]] = {}
         self._tickets: dict[str, dict[str, Any]] = {}
         self._ticket_counter = 0
-        self._metrics = {"chat_requests": 0, "tool_calls": 0, "handoffs": 0}
+        self._metrics = {"chat_requests": 0, "tool_calls": 0, "handoffs": 0, "completed": 0, "needs_input": 0}
 
         self.products = [
             {

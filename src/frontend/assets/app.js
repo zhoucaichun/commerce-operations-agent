@@ -15,6 +15,8 @@ const errorMessage = (status, detail) => {
   };
   return `${messages[status] || "请求未完成。"}${detail ? ` ${detail}` : ""}`;
 };
+const refreshMetrics = async () => { const r = await fetch("/metrics"); const m = await r.json(); $("#metrics").textContent = `请求 ${m.chat_requests}｜完成 ${m.completed}｜人工接管 ${m.handoffs}｜工具/请求 ${m.tool_calls_per_chat}`; };
+$("#refresh-metrics").addEventListener("click", refreshMetrics); refreshMetrics();
 
 document.querySelectorAll("[data-preset]").forEach((button) => button.addEventListener("click", () => {
   const preset = presets[button.dataset.preset];

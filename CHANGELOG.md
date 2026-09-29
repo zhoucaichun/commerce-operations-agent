@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Evaluation and observability
+
+- Expanded deterministic synthetic evaluation to 30 cases and added completed/needs-input metrics plus derived handoff and tool-call rates.
+- Added a read-only frontend operations summary; it contains only synthetic runtime counters.
+
 ### LangGraph and state resilience
 
 - Added explicit LangGraph guard, planner, controlled-tool, validation and handoff nodes around the synthetic agent.
