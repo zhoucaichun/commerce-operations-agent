@@ -41,6 +41,7 @@ class NextWebBridgeTests(unittest.TestCase):
         self.assertIn('fetch("/api/agent/chat"', widget)
         self.assertIn("Voice demo", widget)
         self.assertIn("Photo demo", widget)
+        self.assertIn("turns.length === 1", widget)
         self.assertIn("thread=", widget)
         self.assertIn('searchParams.get("thread")', page)
         self.assertIn("agentThreadRef.current", page)
