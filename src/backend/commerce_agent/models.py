@@ -24,6 +24,7 @@ class ChatRequest:
     thread_id: str
     message: str
     slots: dict[str, str] = field(default_factory=dict)
+    attachments: list[dict[str, str | int]] = field(default_factory=list)
     idempotency_key: str | None = None
 
     @classmethod
@@ -59,6 +60,26 @@ class ChatRequest:
                 raise ValidationError("slot key or value is too long")
             slots[key] = value.strip()
 
+        raw_attachments = payload.get("attachments", [])
+        if raw_attachments is None:
+            raw_attachments = []
+        if not isinstance(raw_attachments, list) or len(raw_attachments) > 3:
+            raise ValidationError("attachments must be a list of at most 3 metadata records")
+        attachments: list[dict[str, str | int]] = []
+        for item in raw_attachments:
+            if not isinstance(item, dict) or set(item) - {"kind", "name", "mime_type", "size_bytes", "demo_scenario"}:
+                raise ValidationError("attachment metadata contains unsupported fields")
+            kind, name, mime_type = item.get("kind"), item.get("name"), item.get("mime_type")
+            if kind not in {"image", "audio"} or not isinstance(name, str) or not name or len(name) > 120 or not isinstance(mime_type, str) or len(mime_type) > 80:
+                raise ValidationError("attachment kind, name, and mime_type are required")
+            size = item.get("size_bytes", 0)
+            if not isinstance(size, int) or size < 0 or size > 10_000_000:
+                raise ValidationError("attachment metadata size is invalid")
+            scenario = item.get("demo_scenario", "")
+            if not isinstance(scenario, str) or len(scenario) > 64:
+                raise ValidationError("attachment demo_scenario is invalid")
+            attachments.append({"kind": kind, "name": name.strip(), "mime_type": mime_type.strip(), "size_bytes": size, "demo_scenario": scenario.strip()})
+
         idempotency_key = payload.get("idempotency_key")
         if idempotency_key is not None:
             if not isinstance(idempotency_key, str) or not re.fullmatch(
@@ -70,6 +91,7 @@ class ChatRequest:
             thread_id=thread_id,
             message=message,
             slots=slots,
+            attachments=attachments,
             idempotency_key=idempotency_key,
         )
 
@@ -83,6 +105,7 @@ class AgentResponse:
     tool_result_summary: list[dict[str, Any]] = field(default_factory=list)
     handoff: dict[str, Any] | None = None
     trace: list[dict[str, Any]] = field(default_factory=list)
+    multimodal: dict[str, Any] | None = None
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -93,4 +116,5 @@ class AgentResponse:
             "tool_result_summary": self.tool_result_summary,
             "handoff": self.handoff,
             "trace": self.trace,
+            "multimodal": self.multimodal,
         }

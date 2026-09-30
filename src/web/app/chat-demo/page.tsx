@@ -37,7 +37,10 @@ type AgentResponse = {
   tool_result_summary?: Array<{ tool?: string }>;
   detail?: string;
   error?: string;
+  multimodal?: { summary?: string; confidence?: string; mode?: string } | null;
 };
+
+type DemoAttachment = { kind: "image" | "audio"; name: string; mime_type: string; size_bytes: number; demo_scenario: string };
 
 type StoredChatState = {
   messages: ChatMessage[];
@@ -52,24 +55,24 @@ function isAgentIntent(query: string) {
   return agentIntentPattern.test(query);
 }
 
-function buildAgentPayload(query: string, threadId: string) {
+function buildAgentPayload(query: string, threadId: string, attachments: DemoAttachment[] = []) {
   const orderId = query.match(/\bORD-\d{4,}\b/i)?.[0]?.toUpperCase();
   const suffixes = query.match(/(?<!\d)\d{4}(?!\d)/g) || [];
   const slots: Record<string, string> = {};
   if (orderId) slots.order_id = orderId;
   if (suffixes.length) slots.identity_suffix = suffixes[suffixes.length - 1];
-  return { thread_id: threadId, message: query, slots };
+  return { thread_id: threadId, message: query, slots, attachments };
 }
 
 function shouldUseCommerceAgent(query: string, fromStore: boolean) {
   return fromStore || isAgentIntent(query);
 }
 
-async function requestAgent(query: string, threadId: string) {
+async function requestAgent(query: string, threadId: string, attachments: DemoAttachment[] = []) {
   const response = await fetch("/api/agent/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(buildAgentPayload(query, threadId))
+    body: JSON.stringify(buildAgentPayload(query, threadId, attachments))
   });
   const data = (await response.json()) as AgentResponse;
   if (!response.ok) {
@@ -261,6 +264,7 @@ function AgentResultCard({ result }: { result: AgentResponse }) {
       {tools.length ? <p>Verified tools: {tools.join(", ")}</p> : null}
       {result.handoff?.reason ? <p>Human handoff: {result.handoff.reason}</p> : null}
       {result.handoff?.summary ? <p>{result.handoff.summary}</p> : null}
+      {result.multimodal?.summary ? <p><strong>Attachment analysis:</strong> {result.multimodal.summary} ({result.multimodal.confidence || "unknown"} confidence)</p> : null}
       <p className="agent-safety-note">Synthetic-only result. No real merchant operation was performed.</p>
     </section>
   );
@@ -295,6 +299,7 @@ export default function ChatDemoPage() {
     initialQuery ? buildChatMessages(initialQuery) : []
   );
   const [inputText, setInputText] = useState("");
+  const [pendingAttachment, setPendingAttachment] = useState<DemoAttachment | null>(null);
   const [conversationId, setConversationId] = useState(initialConversationId);
   const [isSubmitting, setIsSubmitting] = useState(Boolean(initialQuery));
   const [useMock, setUseMock] = useState(true);
@@ -475,6 +480,8 @@ export default function ChatDemoPage() {
     if (!trimmed || isSubmitting) return;
 
     setInputText("");
+    const attachments = pendingAttachment ? [pendingAttachment] : [];
+    setPendingAttachment(null);
     setLiveRecommendation(null);
     setMessages((current) => [
       ...current,
@@ -490,7 +497,7 @@ export default function ChatDemoPage() {
 
     if (shouldUseCommerceAgent(trimmed, fromStore)) {
       try {
-        const agentResult = await requestAgent(trimmed, `web-agent-${crypto.randomUUID()}`);
+        const agentResult = await requestAgent(trimmed, `web-agent-${crypto.randomUUID()}`, attachments);
         setMessages((current) => {
           const next = [...current];
           next.pop();
@@ -643,6 +650,12 @@ export default function ChatDemoPage() {
     inputRef.current?.focus();
   }
 
+  function selectMultimodalDemo(attachment: DemoAttachment, question: string) {
+    setPendingAttachment(attachment);
+    setInputText(question);
+    inputRef.current?.focus();
+  }
+
   return (
     <main className={fromStore ? "page-shell storefront-chat" : "page-shell"}>
       <SiteHeader
@@ -756,6 +769,13 @@ export default function ChatDemoPage() {
           ) : null}
 
           <form className="chat-input-form" onSubmit={handleSubmit}>
+            {fromStore ? <div className="multimodal-demo" aria-label="Synthetic multimodal demo controls">
+              <span>Demo multimodal input:</span>
+              <button type="button" onClick={() => selectMultimodalDemo({ kind: "image", name: "macbook-usbc-65w-demo.jpg", mime_type: "image/jpeg", size_bytes: 120000, demo_scenario: "macbook_charger" }, "Will this charger work with my MacBook Air M2?")} disabled={isSubmitting}>Photo: charger</button>
+              <button type="button" onClick={() => selectMultimodalDemo({ kind: "image", name: "battery-damage-demo.jpg", mime_type: "image/jpeg", size_bytes: 120000, demo_scenario: "battery_damage" }, "Is this battery safe to use?")} disabled={isSubmitting}>Photo: damaged battery</button>
+              <button type="button" onClick={() => selectMultimodalDemo({ kind: "audio", name: "voice-macbook-demo.webm", mime_type: "audio/webm", size_bytes: 24000, demo_scenario: "voice_macbook" }, "Will SKU005 work with my MacBook Air M2?")} disabled={isSubmitting}>Voice: compatibility</button>
+            </div> : null}
+            {pendingAttachment ? <p className="multimodal-pending">Attached synthetic {pendingAttachment.kind}: {pendingAttachment.name}. No file bytes are uploaded or stored.</p> : null}
             <input
               ref={inputRef}
               id="chat-input"

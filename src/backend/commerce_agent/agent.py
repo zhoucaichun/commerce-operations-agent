@@ -11,6 +11,7 @@ from typing import Any
 from uuid import uuid4
 
 from .models import AgentResponse, ChatRequest, ValidationError
+from .multimodal import analyze_attachments
 from .store import InMemoryStore
 from .tools import ToolError, ToolRegistry
 
@@ -32,11 +33,23 @@ class CommerceAgent:
         trace: list[dict[str, Any]] = []
         summaries: list[dict[str, Any]] = []
         state = self._load_state(request.thread_id)
+        multimodal = analyze_attachments(request.attachments)
+        if multimodal and multimodal["slots"]:
+            request = ChatRequest(
+                thread_id=request.thread_id,
+                message=request.message,
+                slots={**request.slots, **multimodal["slots"]},
+                attachments=request.attachments,
+                idempotency_key=request.idempotency_key,
+            )
         state["messages"].append({"role": "user", "summary": self._summarize(request.message)})
         state["slots"].update(request.slots)
+        if multimodal:
+            state["slots"].update(multimodal["slots"])
+            self._trace(trace, request_id, request.thread_id, "normalize_multimodal", multimodal["mode"])
 
         self._trace(trace, request_id, request.thread_id, "guard_input", "ok")
-        risky = self._risk_reason(request.message)
+        risky = (multimodal or {}).get("risk_reason") or self._risk_reason(request.message)
         if risky:
             handoff = self._handoff(
                 self.store,
@@ -53,7 +66,7 @@ class CommerceAgent:
                 request_id=request_id,
                 thread_id=request.thread_id,
                 handoff=handoff,
-                trace=trace,
+                trace=trace, multimodal=multimodal,
             )
 
         self._trace(trace, request_id, request.thread_id, "load_context", "ok")
@@ -128,6 +141,7 @@ class CommerceAgent:
 
         response.tool_result_summary = summaries
         response.trace = trace
+        response.multimodal = multimodal
         state["step_count"] = min(MAX_STEPS, state.get("step_count", 0) + len(summaries))
         state["messages"].append({"role": "assistant", "status": response.status})
         self._save_state(request.thread_id, state)
@@ -396,7 +410,7 @@ class CommerceAgent:
 
     @staticmethod
     def _is_compatibility_intent(text):
-        return any(word in text for word in ("兼容", "能用", "适配", "compatible", "charger for", "work with", "will work"))
+        return any(word in text for word in ("兼容", "能用", "适配", "compatible", "charger for", "work with", "will work", "charger work"))
 
     @staticmethod
     def _is_policy_intent(text):

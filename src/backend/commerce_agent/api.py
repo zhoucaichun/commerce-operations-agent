@@ -28,6 +28,7 @@ class ChatPayload(BaseModel):
     thread_id: str = Field(min_length=1, max_length=100)
     message: str = Field(min_length=1, max_length=4000)
     slots: dict[str, str] = Field(default_factory=dict)
+    attachments: list[dict[str, Any]] = Field(default_factory=list, max_length=3)
     idempotency_key: str | None = Field(default=None, min_length=8, max_length=128)
 
 

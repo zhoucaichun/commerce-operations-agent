@@ -1,5 +1,9 @@
 # Commerce Operations Agent
 
+## Multimodal customer-service MVP (2026-09)
+
+Store chat accepts image and voice demo metadata. A synthetic adapter may propose device/SKU candidates, but final compatibility, policy, order, and after-sales decisions remain controlled-tool decisions. Attachment bytes are not uploaded or retained. Safety signals such as a damaged battery must always hand off to a human.
+
 ## 2026-09 MVP 运行时决策补充
 
 对外售卖的 B 端产品是 **ShopPilot Commerce Agent**，付费客户是跨境 3C 独立站商家。消费者使用商家站内的 **ShopPilot AI Assistant Widget**；客服、运营和管理员使用 **ShopPilot Commerce Agent Console**。它们是不同入口和界面；正式产品可共享统一身份平台，但消费者不登录商家后台。

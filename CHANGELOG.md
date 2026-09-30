@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added a synthetic multimodal MVP: bounded image/audio metadata, synthetic recognition summaries, compatibility slot enrichment, and a battery-safety handoff gate; no media bytes or model provider are used.
+
 - Migrated the reviewed Dify synthetic catalogue (55 products), policy set (35 records), and 145 evaluation prompts into this repository; no Dify API key or real merchant data was copied.
 - Added deterministic `recommend_products` ranking and expanded compatibility/policy lookup to use the migrated synthetic records.
 - Routed all ShopPilot Store-originated full-chat questions to the Commerce Agent; the old Dify route is now a historical standalone comparison path only.

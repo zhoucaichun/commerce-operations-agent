@@ -22,6 +22,8 @@ The product names are fixed for the demo: `ShopPilot 3C Store` is the simulated 
 
 The Agent packages 55 reviewed synthetic products, 35 reviewed synthetic policies, and 145 historical Dify evaluation prompts as repository assets. It adds three legacy safety-test products and two legacy policies, for 58 products and 37 policies at runtime. These assets are not real Shopify, merchant, customer, order, or inventory data. Exact migration scope and the test script are in `docs/DIFY_MIGRATION.md` and `docs/DEMO_GUIDE.md`.
 
+Store chat includes a synthetic multimodal MVP: demo photo and voice metadata are validated and normalized before the ordinary safety/tool chain. It does not upload media bytes or call a model provider; see `docs/MULTIMODAL_MVP.md`.
+
 Open `http://127.0.0.1:8000/` after starting the API or Compose stack. The bundled frontend provides safe chat, optional order ID/suffix fields, simulated-ticket idempotency input, synthetic-token input, tool summaries, and explicit handoff results. It only calls the same-origin `/api/v1/chat` API and has no direct merchant-system integration.
 
 The API sets CSP, `nosniff`, no-referrer and restrictive permissions headers. The UI explains authentication (401), permission (403), duplicate (409), validation (422), and rate-limit (429) responses without claiming that a real action occurred. Run browser E2E locally with `cd tests/e2e; npm ci; npm test` (Windows uses installed Edge; CI uses Playwright Chromium).
