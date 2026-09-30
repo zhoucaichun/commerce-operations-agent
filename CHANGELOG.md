@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Added a synthetic two-merchant B2B demonstration: consumer Widget, Merchant Console, merchant-scoped Agent state and simulated ticket handling.
+- Added B2B product, architecture and delivery-plan documentation, including explicit production boundaries.
+
+## Unreleased
+
 ### Evaluation and observability
 
 - Expanded deterministic synthetic evaluation to 30 cases and added completed/needs-input metrics plus derived handoff and tool-call rates.

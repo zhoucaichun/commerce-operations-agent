@@ -6,6 +6,10 @@ type AgentProxyPayload = {
 };
 
 export async function postToCommerceAgent(payload: AgentProxyPayload) {
+  return postToCommerceEndpoint("/api/v1/chat", payload);
+}
+
+export async function postToCommerceEndpoint(path: string, payload: unknown, method = "POST") {
   const apiBaseUrl = process.env.COMMERCE_AGENT_API_BASE_URL;
   const syntheticToken = process.env.COMMERCE_AGENT_DEMO_TOKEN;
 
@@ -16,8 +20,8 @@ export async function postToCommerceAgent(payload: AgentProxyPayload) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
   try {
-    const response = await fetch(`${apiBaseUrl.replace(/\/$/, "")}/api/v1/chat`, {
-      method: "POST",
+    const response = await fetch(`${apiBaseUrl.replace(/\/$/, "")}${path}`, {
+      method,
       headers: {
         "Content-Type": "application/json",
         ...(syntheticToken ? { Authorization: `Bearer ${syntheticToken}` } : {})

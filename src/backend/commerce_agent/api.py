@@ -15,6 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from .agent import CommerceAgent
 from .auth import AuthenticationError, SyntheticAuthenticator
+from .demo_tenants import DEMO_MERCHANTS, DemoTenantRegistry
 from .graph import CommerceGraph
 from .models import ChatRequest, ValidationError
 from .sqlite_store import SQLiteStore
@@ -30,6 +31,20 @@ class ChatPayload(BaseModel):
     idempotency_key: str | None = Field(default=None, min_length=8, max_length=128)
 
 
+class WidgetChatPayload(ChatPayload):
+    merchant_id: str = Field(min_length=3, max_length=80)
+
+
+class ConsolePayload(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    merchant_id: str = Field(min_length=3, max_length=80)
+    role: str = Field(pattern="^(support|operator|merchant_admin)$")
+
+
+class TicketStatusPayload(ConsolePayload):
+    status: str = Field(pattern="^simulated_(open|in_progress|resolved)$")
+
+
 def build_agent(database_path: str | None = None) -> CommerceAgent:
     dsn = os.getenv("COMMERCE_POSTGRES_DSN")
     return CommerceAgent(PostgresStore(dsn) if dsn else SQLiteStore(database_path or os.getenv("COMMERCE_DB_PATH", ":memory:")))
@@ -43,6 +58,7 @@ def create_app(agent_instance: CommerceAgent | None = None) -> FastAPI:
     app.state.agent.checkpoint_store = app.state.redis_health
     app.state.agent.retry_store = app.state.redis_health
     app.state.graph = CommerceGraph(app.state.agent)
+    app.state.demo_tenants = DemoTenantRegistry(CommerceGraph)
     frontend_dir = Path(os.getenv("COMMERCE_FRONTEND_DIR", Path(__file__).resolve().parents[2] / "frontend"))
 
     @app.middleware("http")
@@ -118,6 +134,53 @@ def create_app(agent_instance: CommerceAgent | None = None) -> FastAPI:
             if locked:
                 guard.release_idempotency_lock(domain_request.idempotency_key)
         return JSONResponse(response.as_dict())
+
+    @app.get("/api/v1/widget/config/{merchant_id}")
+    def widget_config(merchant_id: str, request: Request) -> dict[str, Any]:
+        try:
+            merchant = request.app.state.demo_tenants.merchant(merchant_id)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail="unknown demo merchant") from exc
+        return {"merchant_id": merchant["merchant_id"], "title": merchant["widget_title"], "origin": merchant["origin"], "mode": "synthetic_demo"}
+
+    @app.post("/api/v1/widget/chat")
+    def widget_chat(payload: WidgetChatPayload, request: Request) -> JSONResponse:
+        try:
+            graph = request.app.state.demo_tenants.graph(payload.merchant_id)
+            agent = request.app.state.demo_tenants.agent(payload.merchant_id)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail="unknown demo merchant") from exc
+        try:
+            domain_request = ChatRequest.from_dict({**payload.model_dump(), "thread_id": f"widget:{payload.merchant_id}:{payload.thread_id}"})
+        except ValidationError as exc:
+            agent.store.increment("failure:ValidationError")
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        response = graph.invoke(domain_request, request_id=request.state.request_id)
+        return JSONResponse({**response.as_dict(), "merchant_id": payload.merchant_id, "mode": "synthetic_demo"})
+
+    @app.post("/api/v1/demo/console/overview")
+    def console_overview(payload: ConsolePayload, request: Request) -> dict[str, Any]:
+        try:
+            merchant = request.app.state.demo_tenants.merchant(payload.merchant_id)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail="unknown demo merchant") from exc
+        if payload.role not in merchant["roles"]:
+            raise HTTPException(status_code=403, detail="demo role is not allowed for this merchant")
+        overview = request.app.state.demo_tenants.overview(payload.merchant_id)
+        overview["role"] = payload.role
+        return overview
+
+    @app.patch("/api/v1/demo/console/tickets/{ticket_id}")
+    def update_demo_ticket(ticket_id: str, payload: TicketStatusPayload, request: Request) -> dict[str, Any]:
+        if payload.role not in {"support", "merchant_admin"}:
+            raise HTTPException(status_code=403, detail="only synthetic support roles may update simulated tickets")
+        try:
+            ticket = request.app.state.demo_tenants.agent(payload.merchant_id).store.update_ticket_status(ticket_id, payload.status)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail="unknown demo merchant") from exc
+        if ticket is None:
+            raise HTTPException(status_code=404, detail="simulated ticket not found in this merchant")
+        return {"ticket": ticket, "mode": "synthetic_demo"}
 
     return app
 

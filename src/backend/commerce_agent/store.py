@@ -111,6 +111,21 @@ class InMemoryStore:
             self._tickets[idempotency_key] = ticket
             return {**deepcopy(ticket), "deduplicated": False}
 
+    def list_tickets(self) -> list[dict[str, Any]]:
+        """Return only synthetic tickets held by this tenant's store."""
+        with self._lock:
+            return [deepcopy(ticket) for ticket in reversed(list(self._tickets.values()))]
+
+    def update_ticket_status(self, ticket_id: str, status: str) -> dict[str, Any] | None:
+        """Update a simulated ticket only; no external helpdesk is contacted."""
+        with self._lock:
+            for key, ticket in self._tickets.items():
+                if ticket["ticket_id"] == ticket_id:
+                    ticket["status"] = status
+                    self._tickets[key] = ticket
+                    return deepcopy(ticket)
+        return None
+
     def increment(self, metric: str) -> None:
         with self._lock:
             self._metrics[metric] = self._metrics.get(metric, 0) + 1

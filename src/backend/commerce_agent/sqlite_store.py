@@ -66,6 +66,26 @@ class SQLiteStore(InMemoryStore):
             self._connection.commit()
         return {**ticket, "deduplicated": False}
 
+    def list_tickets(self) -> list[dict[str, Any]]:
+        with self._db_lock:
+            rows = self._connection.execute("SELECT payload FROM tickets ORDER BY rowid DESC").fetchall()
+        return [json.loads(row["payload"]) for row in rows]
+
+    def update_ticket_status(self, ticket_id: str, status: str) -> dict[str, Any] | None:
+        with self._db_lock:
+            rows = self._connection.execute("SELECT idempotency_key, payload FROM tickets").fetchall()
+            for row in rows:
+                ticket = json.loads(row["payload"])
+                if ticket["ticket_id"] == ticket_id:
+                    ticket["status"] = status
+                    self._connection.execute(
+                        "UPDATE tickets SET payload = ? WHERE idempotency_key = ?",
+                        (json.dumps(ticket, ensure_ascii=False, separators=(",", ":")), row["idempotency_key"]),
+                    )
+                    self._connection.commit()
+                    return ticket
+        return None
+
     def increment(self, metric: str) -> None:
         super().increment(metric)
         if metric in self._metrics:
