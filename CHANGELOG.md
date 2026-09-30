@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Added direct text chat and synthetic voice/photo actions to the ShopPilot Store Widget, with a shared Agent `thread_id` when opening the full conversation page.
+- Added a dated, source-labelled public product-reference catalogue for realistic demonstration facts. It is not a live merchant connection, inventory feed, or price promise.
+- Improved non-vehicle iPhone charging-bundle ranking to avoid car chargers and added regression coverage.
+
+## Unreleased
+
 - Added structured recommendation evidence to Agent responses so the web can show SKU, category, price, and migrated synthetic-catalogue provenance.
 - Documented the non-implemented production merchant-data path: tenant-scoped PostgreSQL, Shopify OAuth/read-only projection, and approval gates.
 

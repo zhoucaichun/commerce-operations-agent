@@ -38,7 +38,7 @@ type AgentResponse = {
   detail?: string;
   error?: string;
   multimodal?: { summary?: string; confidence?: string; mode?: string } | null;
-  recommendations?: Array<{ sku?: string; name?: string; category?: string; price_usd?: number; source?: string }>;
+  recommendations?: Array<{ sku?: string; name?: string; category?: string; price_usd?: number; source?: string; source_url?: string; source_checked_at?: string }>;
 };
 
 type DemoAttachment = { kind: "image" | "audio"; name: string; mime_type: string; size_bytes: number; demo_scenario: string };
@@ -262,6 +262,7 @@ function AgentResultCard({ result }: { result: AgentResponse }) {
         <strong>Commerce Operations Agent</strong>
         <span className="agent-status">{result.status || "completed"}</span>
       </div>
+      {result.recommendations?.some((product) => product.source === "public_reference_catalog") ? <p className="agent-provenance-note">Public reference facts are dated snapshots, not live merchant price or inventory.</p> : null}
       {tools.length ? <p>Verified tools: {tools.join(", ")}</p> : null}
       {result.handoff?.reason ? <p>Human handoff: {result.handoff.reason}</p> : null}
       {result.handoff?.summary ? <p>{result.handoff.summary}</p> : null}
@@ -280,6 +281,7 @@ export default function ChatDemoPage() {
   const assistantName = fromStore ? "ShopPilot AI Assistant" : "ShopPilot 3C";
 
   const initialQuery = searchParams.get("q")?.trim() || "";
+  const suppliedThreadId = searchParams.get("thread")?.trim() || "";
   const initialConversationId = searchParams.get("conversation_id")?.trim() || "";
   const country = searchParams.get("country")?.trim() || "";
   const deviceModel = searchParams.get("device_model")?.trim() || "";
@@ -309,6 +311,8 @@ export default function ChatDemoPage() {
     useState<ProductRecommendation | null>(null);
   const [isReady, setIsReady] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const agentThreadRef = useRef("");
+  if (!agentThreadRef.current) agentThreadRef.current = suppliedThreadId || `web-agent-${crypto.randomUUID()}`;
 
   useEffect(() => {
     const mockEnabled = process.env.NEXT_PUBLIC_USE_MOCK === "true";
@@ -373,7 +377,7 @@ export default function ChatDemoPage() {
 
       try {
         if (shouldUseCommerceAgent(initialQuery, fromStore)) {
-          const agentResult = await requestAgent(initialQuery, `web-agent-${crypto.randomUUID()}`);
+          const agentResult = await requestAgent(initialQuery, agentThreadRef.current);
           setLiveRecommendation(null);
           setMessages([
             { role: "user", message: initialQuery, meta: "You | just now" },
@@ -499,7 +503,7 @@ export default function ChatDemoPage() {
 
     if (shouldUseCommerceAgent(trimmed, fromStore)) {
       try {
-        const agentResult = await requestAgent(trimmed, `web-agent-${crypto.randomUUID()}`, attachments);
+        const agentResult = await requestAgent(trimmed, agentThreadRef.current, attachments);
         setMessages((current) => {
           const next = [...current];
           next.pop();

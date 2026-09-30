@@ -46,6 +46,29 @@ def load_dify_products() -> list[dict[str, Any]]:
         ]
 
 
+def load_public_reference_products() -> list[dict[str, Any]]:
+    """Load public, dated product facts without treating them as merchant data."""
+    path = DATA_DIR / "public_reference_catalog.csv"
+    if not path.exists():
+        return []
+    with path.open(encoding="utf-8-sig", newline="") as handle:
+        return [
+            {
+                "sku": row["sku_id"].strip(), "name": row["product_name"].strip(),
+                "category": row["category"].strip().lower(), "brand": row["brand"].strip(),
+                "device_compatibility": row["device_compatibility"].strip(),
+                "ports": _parts(row["connector"]), "power_w": _number(row["power_watt"]),
+                "price_usd": _number(row["price_usd"]), "regions": _parts(row["country_available"]),
+                "usage_scenarios": _parts(row["usage_scenario"], ("|", ",", ";")),
+                "key_features": row["key_features"].strip(), "limitations": row["limitations"].strip(),
+                "warranty_months": _number(row["warranty_months"]), "search_aliases": row["search_aliases"].strip(),
+                "source": "public_reference_catalog", "source_url": row["source_url"].strip(),
+                "source_checked_at": row["source_checked_at"].strip(), "stock": "not_connected",
+            }
+            for row in csv.DictReader(handle)
+        ]
+
+
 def load_dify_policies() -> list[dict[str, Any]]:
     """Return only synthetic policy records packaged with this repository."""
     path = DATA_DIR / "dify_policy_catalog.csv"

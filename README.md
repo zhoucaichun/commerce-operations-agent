@@ -24,6 +24,8 @@ The Agent packages 55 reviewed synthetic products, 35 reviewed synthetic policie
 
 Store chat includes a synthetic multimodal MVP: demo photo and voice metadata are validated and normalized before the ordinary safety/tool chain. It does not upload media bytes or call a model provider; see `docs/MULTIMODAL_MVP.md`.
 
+The floating Store Widget now supports direct text chat plus synthetic voice/photo demo actions. Its `thread_id` is passed into “Open full conversation”, so the full page continues the same server-side Agent state (not a private transcript export). `docs/PUBLIC_REFERENCE_CATALOG.md` documents a small dated public-reference catalogue; it is visibly non-live, never treated as merchant inventory, and does not replace the migrated synthetic ShopPilot catalogue.
+
 Real merchant data integration is not implemented. The production Shopify/tenant database design and activation prerequisites are explicit in `docs/PRODUCTION_MERCHANT_DATA.md`; Dify is a workflow/evaluation reference, never the merchant data layer.
 
 Open `http://127.0.0.1:8000/` after starting the API or Compose stack. The bundled frontend provides safe chat, optional order ID/suffix fields, simulated-ticket idempotency input, synthetic-token input, tool summaries, and explicit handoff results. It only calls the same-origin `/api/v1/chat` API and has no direct merchant-system integration.

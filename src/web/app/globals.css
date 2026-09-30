@@ -1638,6 +1638,9 @@ textarea {
   }
 }
 
+/* Direct customer chat inside the embedded Store Widget. */
+.store-link-button{border:0;background:transparent;color:inherit;font:inherit;font-weight:650;cursor:pointer}.widget-prompts button{padding:10px 11px;border:1px solid #d5e0da;border-radius:8px;color:#19634f;background:#fff;font-size:12px;font-weight:700;text-align:left;cursor:pointer}.widget-chat-log{display:grid;gap:8px;max-height:170px;overflow-y:auto}.widget-user-bubble{justify-self:end;width:85%;margin:0;padding:11px;border-radius:14px 4px 14px 14px;background:#1d6f5b;color:#fff;font-size:12px;line-height:1.45}.widget-chat-form{display:flex;gap:7px;margin-top:12px}.widget-chat-form input{min-width:0;flex:1;padding:10px;border:1px solid #cddbd2;border-radius:9px;background:#fff;font:inherit;font-size:12px}.widget-chat-form button{width:37px;border:0;border-radius:9px;background:#176b57;color:#fff;cursor:pointer}.widget-chat-form button:disabled{opacity:.5;cursor:not-allowed}.widget-input-actions{display:flex;gap:8px;margin-top:9px}.widget-input-actions button{border:0;background:transparent;color:#176b57;font-size:11px;font-weight:700;cursor:pointer;padding:0}.store-widget-body small{display:block;margin-top:9px;color:#6a7a74;font-size:10px}.agent-provenance-note{font-size:12px;color:#557269}
+
 /* Shopify-style storefront mock: original ShopPilot demo brand and synthetic catalog. */
 .storefront { min-height: 100vh; background: #f8f8f5; color: #15171a; font-family: Arial, Helvetica, sans-serif; }
 .store-demo-ribbon { padding: 9px 20px; background: #18272b; color: #e9f6e9; text-align: center; font-size: 11px; font-weight: 700; letter-spacing: .08em; }

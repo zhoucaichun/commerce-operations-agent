@@ -85,11 +85,21 @@ class ToolRegistry:
                 continue
             haystack = self._haystack(product)
             score = 0
-            if device and device in str(product.get("device_compatibility", "")).lower(): score += 100
+            compatibility = str(product.get("device_compatibility", "")).lower()
+            if device and device in compatibility:
+                score += 100
+            elif device and device.split()[0] in compatibility:
+                score += 45
             if country and country in product.get("regions", []): score += 20
             if usage and usage in " ".join(product.get("usage_scenarios", [])).lower(): score += 15
             score += sum(5 for token in query_tokens if token in haystack)
             if category and category in str(product.get("category", "")).lower(): score += 20
+            if "bundle" in query and any(word in str(product.get("category", "")).lower() for word in ("charger", "cable")):
+                score += 30
+            if not any(word in query for word in ("car", "drive", "vehicle")) and "car" in haystack:
+                score -= 80
+            if product.get("source") == "public_reference_catalog":
+                score -= 10
             if score or not (device or category or query_tokens): ranked.append({**product, "recommendation_score": score})
         ranked.sort(key=lambda product: (-product["recommendation_score"], product.get("price_usd") is None, product.get("price_usd") or 0, product["sku"]))
         return {"criteria": {"device": device, "country": country, "budget": budget, "usage_scenario": usage, "category": category}, "products": ranked[:3], "data_source": "dify_synthetic_catalog_migration"}

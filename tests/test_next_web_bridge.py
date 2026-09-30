@@ -31,7 +31,19 @@ class NextWebBridgeTests(unittest.TestCase):
         self.assertIn('searchParams.get("from") === "store"', page)
         self.assertIn('backHref={fromStore ? "/store" : "/start"}', page)
         self.assertIn('homeHref={fromStore ? "/store" : "/"}', page)
-        self.assertIn("/chat-demo?from=store", store)
+        self.assertIn("StoreWidget", store)
+
+    def test_store_widget_can_chat_and_preserve_agent_thread_for_full_page(self):
+        store = (WEB / "app" / "store" / "page.tsx").read_text(encoding="utf-8")
+        widget = (WEB / "components" / "store" / "StoreWidget.tsx").read_text(encoding="utf-8")
+        page = (WEB / "app" / "chat-demo" / "page.tsx").read_text(encoding="utf-8")
+        self.assertIn("StoreWidget", store)
+        self.assertIn('fetch("/api/agent/chat"', widget)
+        self.assertIn("Voice demo", widget)
+        self.assertIn("Photo demo", widget)
+        self.assertIn("thread=", widget)
+        self.assertIn('searchParams.get("thread")', page)
+        self.assertIn("agentThreadRef.current", page)
 
 
 if __name__ == "__main__":

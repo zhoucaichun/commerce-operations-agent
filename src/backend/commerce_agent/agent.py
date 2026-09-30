@@ -289,6 +289,11 @@ class CommerceAgent:
             request, request_id, trace, summaries,
         )
         products = result["products"]
+        if "bundle" in request.message.lower() and products:
+            chargers = [item for item in products if "charger" in str(item.get("category", "")).lower()]
+            cables = [item for item in result["products"] if "cable" in str(item.get("category", "")).lower()]
+            if chargers and cables:
+                products = [chargers[0], cables[0]]
         if not products:
             return AgentResponse(status="needs_input", answer="I could not find a synthetic catalogue match. Please add a device model, category, country, or budget.", request_id=request_id, thread_id=request.thread_id)
         formatted = "; ".join(
@@ -296,7 +301,7 @@ class CommerceAgent:
             for item in products
         )
         qualifier = f" for {device}" if device else ""
-        evidence = [{key: item.get(key) for key in ("sku", "name", "category", "price_usd", "device_compatibility", "usage_scenarios", "source")} for item in products]
+        evidence = [{key: item.get(key) for key in ("sku", "name", "category", "price_usd", "device_compatibility", "usage_scenarios", "source", "source_url", "source_checked_at")} for item in products]
         return AgentResponse(status="completed", answer=f"From the migrated synthetic ShopPilot catalogue, my recommended match{qualifier} is: {formatted}. These are demonstration-only products and availability; no real Shopify catalogue or inventory was queried.", request_id=request_id, thread_id=request.thread_id, recommendations=evidence)
 
     def _handle_product(self, request, state, trace, summaries, request_id):
