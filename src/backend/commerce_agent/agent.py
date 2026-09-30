@@ -296,7 +296,8 @@ class CommerceAgent:
             for item in products
         )
         qualifier = f" for {device}" if device else ""
-        return AgentResponse(status="completed", answer=f"From the migrated synthetic ShopPilot catalogue, my recommended match{qualifier} is: {formatted}. These are demonstration-only products and availability; no real Shopify catalogue or inventory was queried.", request_id=request_id, thread_id=request.thread_id)
+        evidence = [{key: item.get(key) for key in ("sku", "name", "category", "price_usd", "device_compatibility", "usage_scenarios", "source")} for item in products]
+        return AgentResponse(status="completed", answer=f"From the migrated synthetic ShopPilot catalogue, my recommended match{qualifier} is: {formatted}. These are demonstration-only products and availability; no real Shopify catalogue or inventory was queried.", request_id=request_id, thread_id=request.thread_id, recommendations=evidence)
 
     def _handle_product(self, request, state, trace, summaries, request_id):
         query = request.slots.get("query") or self._product_query(request.message)

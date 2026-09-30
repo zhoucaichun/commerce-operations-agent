@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Added structured recommendation evidence to Agent responses so the web can show SKU, category, price, and migrated synthetic-catalogue provenance.
+- Documented the non-implemented production merchant-data path: tenant-scoped PostgreSQL, Shopify OAuth/read-only projection, and approval gates.
+
 - Added a synthetic multimodal MVP: bounded image/audio metadata, synthetic recognition summaries, compatibility slot enrichment, and a battery-safety handoff gate; no media bytes or model provider are used.
 
 - Migrated the reviewed Dify synthetic catalogue (55 products), policy set (35 records), and 145 evaluation prompts into this repository; no Dify API key or real merchant data was copied.

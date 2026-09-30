@@ -38,6 +38,7 @@ type AgentResponse = {
   detail?: string;
   error?: string;
   multimodal?: { summary?: string; confidence?: string; mode?: string } | null;
+  recommendations?: Array<{ sku?: string; name?: string; category?: string; price_usd?: number; source?: string }>;
 };
 
 type DemoAttachment = { kind: "image" | "audio"; name: string; mime_type: string; size_bytes: number; demo_scenario: string };
@@ -265,6 +266,7 @@ function AgentResultCard({ result }: { result: AgentResponse }) {
       {result.handoff?.reason ? <p>Human handoff: {result.handoff.reason}</p> : null}
       {result.handoff?.summary ? <p>{result.handoff.summary}</p> : null}
       {result.multimodal?.summary ? <p><strong>Attachment analysis:</strong> {result.multimodal.summary} ({result.multimodal.confidence || "unknown"} confidence)</p> : null}
+      {result.recommendations?.length ? <div className="agent-product-grid">{result.recommendations.map((product) => <article key={product.sku} className="agent-product-card"><span>{product.category || "Accessory"}</span><strong>{product.name}</strong><b>{product.sku} · ${product.price_usd?.toFixed(2) || "—"}</b><small>Source: migrated synthetic catalogue</small></article>)}</div> : null}
       <p className="agent-safety-note">Synthetic-only result. No real merchant operation was performed.</p>
     </section>
   );
