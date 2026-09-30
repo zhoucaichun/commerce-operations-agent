@@ -20,7 +20,7 @@ The production-facing Next.js source baseline is in `src/web`. It is copied from
 
 The product names are fixed for the demo: `ShopPilot 3C Store` is the simulated merchant storefront, `ShopPilot AI Assistant` is its consumer-facing assistant, and `ShopPilot Commerce Agent Console` is the merchant employee interface. Start the FastAPI API, then start `src/web` on port 3000 and open `/store`. The assistant links to `/chat-demo?from=store`, which now uses the Agent for catalogue recommendation, compatibility, policy, verified synthetic order lookup, and safe handoff.
 
-The Agent packages 55 reviewed synthetic products, 35 reviewed synthetic policies, and 145 historical Dify evaluation prompts as repository assets. It adds three legacy safety-test products and two legacy policies, for 58 products and 37 policies at runtime. These assets are not real Shopify, merchant, customer, order, or inventory data. Exact migration scope and the test script are in `docs/DIFY_MIGRATION.md` and `docs/DEMO_GUIDE.md`.
+The Agent packages 55 reviewed synthetic products, 35 reviewed synthetic policies, 145 historical Dify evaluation prompts, three legacy safety-test products, and four dated public-reference demonstration records. It therefore has 62 product entries and 37 policy entries at runtime. These assets are not real Shopify, merchant, customer, order, or inventory data. Exact migration scope and the test script are in `docs/DIFY_MIGRATION.md` and `docs/DEMO_GUIDE.md`.
 
 Store chat includes a synthetic multimodal MVP: demo photo and voice metadata are validated and normalized before the ordinary safety/tool chain. It does not upload media bytes or call a model provider; see `docs/MULTIMODAL_MVP.md`.
 
@@ -73,8 +73,10 @@ Invoke-RestMethod http://127.0.0.1:8000/api/v1/chat -Method Post -ContentType "a
 
 ## 已知未完成项
 
-- 尚未接入 FastAPI/Pydantic、PostgreSQL/pgvector、Redis、LangGraph、LLM、Next.js、SSE、Docker Compose、迁移、CI 和完整评测集。
-- 会话、工单和指标仅存于进程内，重启后丢失；尚无生产级鉴权、限流或多实例一致性。
+- 当前未接入 LLM Provider、pgvector/RAG、真实 Shopify/ERP/OMS/WMS/CRM 数据连接器、真实 OIDC 身份提供方或生产级 PostgreSQL 行级租户隔离。
+- 当前商品、政策、订单、会话、工单和指标均为演示数据或演示状态；PostgreSQL/Redis/Compose、FastAPI、Next.js、LangGraph 状态机、CI 与确定性评测已经存在，但不等于生产激活。
+- 当前评测覆盖确定性工具、安全链路和冒烟场景；模型质量、完整 badcase 回归集、人工标注与正式发布阈值尚待完成。
+- 当前运行时/工作流/评测文档见 `docs/AGENT_RUNTIME_SPEC.md`、`docs/DIFY_WORKFLOW_SPEC.md`、`docs/EVALUATION_SPEC.md`：它们明确区分现有 MVP 与生产目标。
 
 ## 安全边界
 

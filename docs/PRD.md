@@ -4,6 +4,23 @@
 
 Store chat accepts image and voice demo metadata. A synthetic adapter may propose device/SKU candidates, but final compatibility, policy, order, and after-sales decisions remain controlled-tool decisions. Attachment bytes are not uploaded or retained. Safety signals such as a damaged battery must always hand off to a human.
 
+## Agent runtime and quality requirements (normative supplement)
+
+This PRD states **what outcome the product must provide**, not the exact wording of every Dify prompt. Prompt text, slot extraction examples, workflow-node details, model choice, and badcase fixtures are maintained separately so that they can improve without silently changing product or safety requirements.
+
+Every supported chain must have the following product-level acceptance criteria:
+
+| Chain | Required user outcome | Required factual basis | Escalation condition |
+|---|---|---|---|
+| Recommendation | Relevant, complementary candidates or one focused clarification | Merchant-scoped catalogue attributes and source/timestamp | Missing constraints, incompatible candidates, unavailable/uncertain facts |
+| Compatibility | Clear compatible/incompatible/unknown answer with limitations | Versioned compatibility rule and declared device/product fields | Missing facts, ambiguous adapter/power conditions, safety risk |
+| Policy | Applicable policy scope and effective evidence | Region/topic/effective-date policy record | Exception, expired/missing policy, request to execute an outcome |
+| Order/logistics | Minimal verified order/shipment answer | Tenant-scoped order data after required ownership check | Failed ownership, data mismatch, carrier/system failure |
+| After-sales | Safe explanation and structured human-support request when appropriate | Verified order/policy evidence and risk classification | Refund, cancellation, address, inventory, payout, exception, or safety request |
+| Multimodal | Safe text/voice/photo-assisted clarification or answer | Validated metadata plus controlled-tool evidence | Low confidence, unsafe electrical/battery signal, identity/ownership claim |
+
+The runtime implementation of Model, Planner, Tool use, Memory, and Harness is specified in [AGENT_RUNTIME_SPEC.md](AGENT_RUNTIME_SPEC.md). Dify-derived workflow details are governed by [DIFY_WORKFLOW_SPEC.md](DIFY_WORKFLOW_SPEC.md); regression and release evidence is governed by [EVALUATION_SPEC.md](EVALUATION_SPEC.md). These documents are part of the MVP-to-production acceptance baseline.
+
 ## 2026-09 MVP 运行时决策补充
 
 对外售卖的 B 端产品是 **ShopPilot Commerce Agent**，付费客户是跨境 3C 独立站商家。消费者使用商家站内的 **ShopPilot AI Assistant Widget**；客服、运营和管理员使用 **ShopPilot Commerce Agent Console**。它们是不同入口和界面；正式产品可共享统一身份平台，但消费者不登录商家后台。

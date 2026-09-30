@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Defined the canonical Agent runtime contract (Model, Planner, Tool use, Memory, Harness), including the distinction between the current deterministic LangGraph MVP and a future model-assisted runtime.
+- Added a Dify workflow migration specification and an Agent evaluation specification, so reviewed Dify prompts/nodes/badcases are source material rather than an unbounded runtime dependency.
+- Corrected README status language: FastAPI, Next.js, Compose, Redis, LangGraph state-machine, CI, and deterministic checks exist; LLM quality, real merchant connectors, production RLS/OIDC, and full release evaluation remain incomplete.
+
 - Prevent the legacy static recommendation preview from appearing in Store-origin Commerce Agent conversations.
 - Hide Store Widget starter prompts immediately after the first customer action, preserving room for the ongoing conversation.
 - Restyled the Store-origin full-chat composer as a privacy-labelled pill with voice, attachment, camera and send controls; actions remain synthetic-only demonstrations.
