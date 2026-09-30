@@ -24,6 +24,7 @@ class NextWebBridgeTests(unittest.TestCase):
         self.assertIn("shouldUseCommerceAgent", page)
         self.assertIn("fromStore || isAgentIntent(query)", page)
         self.assertIn("AgentResultCard", page)
+        self.assertIn("!fromStore && useMock", page)
 
     def test_storefront_chat_uses_store_context_and_return_path(self):
         page = (WEB / "app" / "chat-demo" / "page.tsx").read_text(encoding="utf-8")

@@ -743,7 +743,7 @@ export default function ChatDemoPage() {
             </section>
           ) : null}
 
-          {useMock && messages.length > 0 && !isSubmitting ? (
+          {!fromStore && useMock && messages.length > 0 && !isSubmitting ? (
             <section className="reco-section">
               <div className="reco-heading">
                 <div className="brand-mark">AI</div>

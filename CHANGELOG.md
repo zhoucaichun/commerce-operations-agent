@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Prevent the legacy static recommendation preview from appearing in Store-origin Commerce Agent conversations.
 - Hide Store Widget starter prompts immediately after the first customer action, preserving room for the ongoing conversation.
 - Restyled the Store-origin full-chat composer as a privacy-labelled pill with voice, attachment, camera and send controls; actions remain synthetic-only demonstrations.
 - Added direct text chat and synthetic voice/photo actions to the ShopPilot Store Widget, with a shared Agent `thread_id` when opening the full conversation page.
