@@ -45,6 +45,13 @@ class NextWebBridgeTests(unittest.TestCase):
         self.assertIn('searchParams.get("thread")', page)
         self.assertIn("agentThreadRef.current", page)
 
+    def test_storefront_full_chat_uses_privacy_composer_and_safe_demo_controls(self):
+        page = (WEB / "app" / "chat-demo" / "page.tsx").read_text(encoding="utf-8")
+        self.assertIn("storefront-composer", page)
+        self.assertIn("Your conversation is private", page)
+        self.assertIn("synthetic voice compatibility demo", page)
+        self.assertIn("synthetic charger photo demo", page)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -774,30 +774,15 @@ export default function ChatDemoPage() {
             </>
           ) : null}
 
-          <form className="chat-input-form" onSubmit={handleSubmit}>
-            {fromStore ? <div className="multimodal-demo" aria-label="Synthetic multimodal demo controls">
-              <span>Demo multimodal input:</span>
-              <button type="button" onClick={() => selectMultimodalDemo({ kind: "image", name: "macbook-usbc-65w-demo.jpg", mime_type: "image/jpeg", size_bytes: 120000, demo_scenario: "macbook_charger" }, "Will this charger work with my MacBook Air M2?")} disabled={isSubmitting}>Photo: charger</button>
-              <button type="button" onClick={() => selectMultimodalDemo({ kind: "image", name: "battery-damage-demo.jpg", mime_type: "image/jpeg", size_bytes: 120000, demo_scenario: "battery_damage" }, "Is this battery safe to use?")} disabled={isSubmitting}>Photo: damaged battery</button>
-              <button type="button" onClick={() => selectMultimodalDemo({ kind: "audio", name: "voice-macbook-demo.webm", mime_type: "audio/webm", size_bytes: 24000, demo_scenario: "voice_macbook" }, "Will SKU005 work with my MacBook Air M2?")} disabled={isSubmitting}>Voice: compatibility</button>
-            </div> : null}
+          <form className={fromStore ? "chat-input-form storefront-composer-form" : "chat-input-form"} onSubmit={handleSubmit}>
             {pendingAttachment ? <p className="multimodal-pending">Attached synthetic {pendingAttachment.kind}: {pendingAttachment.name}. No file bytes are uploaded or stored.</p> : null}
-            <input
-              ref={inputRef}
-              id="chat-input"
-              className="chat-input"
-              value={inputText}
-              onChange={(event) => setInputText(event.target.value)}
-              placeholder="Ask a follow-up question..."
-              disabled={isSubmitting}
-            />
-            <button
-              className="button button-primary"
-              type="submit"
-              disabled={isSubmitting || !inputText.trim()}
-            >
-              Send
-            </button>
+            {fromStore ? <div className="storefront-composer">
+              <button className="composer-icon-button composer-voice" type="button" aria-label="Use synthetic voice compatibility demo" title="Voice demo" onClick={() => selectMultimodalDemo({ kind: "audio", name: "voice-macbook-demo.webm", mime_type: "audio/webm", size_bytes: 24000, demo_scenario: "voice_macbook" }, "Will SKU005 work with my MacBook Air M2?")} disabled={isSubmitting}>◉</button>
+              <div className="composer-input-wrap"><span aria-hidden="true" className="composer-privacy">✦</span><input ref={inputRef} id="chat-input" className="chat-input storefront-chat-input" value={inputText} onChange={(event) => setInputText(event.target.value)} placeholder="Your conversation is private" aria-label="Ask ShopPilot AI" disabled={isSubmitting} /></div>
+              <button className="composer-icon-button" type="button" aria-label="Use synthetic damaged battery photo demo" title="Battery photo demo" onClick={() => selectMultimodalDemo({ kind: "image", name: "battery-damage-demo.jpg", mime_type: "image/jpeg", size_bytes: 120000, demo_scenario: "battery_damage" }, "Is this battery safe to use?")} disabled={isSubmitting}>+</button>
+              <button className="composer-icon-button" type="button" aria-label="Use synthetic charger photo demo" title="Charger photo demo" onClick={() => selectMultimodalDemo({ kind: "image", name: "macbook-usbc-65w-demo.jpg", mime_type: "image/jpeg", size_bytes: 120000, demo_scenario: "macbook_charger" }, "Will this charger work with my MacBook Air M2?")} disabled={isSubmitting}>▣</button>
+              <button className="composer-send" type="submit" aria-label="Send message" disabled={isSubmitting || !inputText.trim()}>↑</button>
+            </div> : <><input ref={inputRef} id="chat-input" className="chat-input" value={inputText} onChange={(event) => setInputText(event.target.value)} placeholder="Ask a follow-up question..." disabled={isSubmitting} /><button className="button button-primary" type="submit" disabled={isSubmitting || !inputText.trim()}>Send</button></>}
           </form>
         </div>
       </div>
