@@ -10,7 +10,7 @@ The synthetic evaluation now runs 30 deterministic cases. The web UI includes a 
 
 ## Web interface
 
-Preview the original Shopify-style ShopPilot 3C storefront mock at `/store`. It is a visual integration preview only: product art and catalog labels are synthetic, the floating assistant opens a guided Widget shell, and its links use the existing full chat page. It does not connect to Shopify or change any real order.
+Preview the original Shopify-style ShopPilot 3C storefront mock at `/store`. Its floating assistant and Support entry open `/chat-demo?from=store`, which uses the same store theme and always returns to `/store`. Product art and catalog labels are synthetic; it does not connect to Shopify or change any real order.
 
 The B2B product demonstration now exposes two deliberately different entries: `/widget?merchant=demo-3c-store` is a consumer-facing, embeddable Widget simulation, while `/console` is the merchant staff Console. Switch between the two synthetic merchants and roles to verify that orders, tickets, metrics and Widget configuration remain scoped to the selected merchant. The role selector is a demonstration aid, not OIDC or production authentication; see `docs/B2B_DEMO_IMPLEMENTATION_PLAN.md`.
 

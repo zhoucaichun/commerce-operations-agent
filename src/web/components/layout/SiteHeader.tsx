@@ -4,6 +4,8 @@ import { Button } from "../ui/Button";
 type SiteHeaderProps = {
   backHref?: string;
   backLabel?: string;
+  homeHref?: string;
+  homeLabel?: string;
   rightAction?: {
     href: string;
     label: string;
@@ -14,6 +16,8 @@ type SiteHeaderProps = {
 export function SiteHeader({
   backHref,
   backLabel = "Back",
+  homeHref = "/",
+  homeLabel = "Home",
   rightAction
 }: SiteHeaderProps) {
   return (
@@ -29,10 +33,10 @@ export function SiteHeader({
             </Link>
           ) : null}
 
-          <Link href="/" className="brand brand-home" aria-label="Home">
+          <Link href={homeHref} className="brand brand-home" aria-label={homeLabel}>
             <span className="brand-mark">3C</span>
             <span className="brand-home-text">
-              <span className="brand-home-label">Home</span>
+              <span className="brand-home-label">{homeLabel}</span>
               <span className="brand-home-name">ShopPilot 3C</span>
             </span>
           </Link>

@@ -19,7 +19,7 @@ export default function StoreMockPage() {
       <header className="store-nav">
         <Link className="store-brand" href="/store"><span>SP</span><strong>ShopPilot 3C</strong></Link>
         <nav aria-label="Store navigation"><a href="#chargers">Chargers</a><a href="#power">Power Banks</a><a href="#hubs">Hubs & Docks</a><a href="#new">New arrivals</a></nav>
-        <div className="store-nav-actions"><button className="store-support" onClick={() => setWidgetOpen(true)}>✦ AI Assistant</button><Link href="/chat-demo">Support</Link><span aria-label="Shopping bag">Bag (0)</span></div>
+        <div className="store-nav-actions"><button className="store-support" onClick={() => setWidgetOpen(true)}>✦ AI Assistant</button><Link href="/chat-demo?from=store">Support</Link><span aria-label="Shopping bag">Bag (0)</span></div>
       </header>
 
       <section className="store-hero">
@@ -37,7 +37,7 @@ export default function StoreMockPage() {
 
       <footer className="store-footer"><strong>ShopPilot 3C</strong><span>Simulated Shopify-style storefront · synthetic catalog only</span><Link href="/console">Merchant Console ↗</Link></footer>
 
-      {widgetOpen ? <aside className="store-widget" aria-label="ShopPilot AI Assistant"><header><div><i>✦</i><strong>ShopPilot AI Assistant</strong><span>Online · synthetic demo</span></div><button aria-label="Close assistant" onClick={() => setWidgetOpen(false)}>×</button></header><div className="store-widget-body"><p className="widget-bubble">Hi! I can help you find the right accessory, check compatibility, or look up a demo order.</p><div className="widget-prompts"><Link href="/chat-demo?q=Recommend%20a%20charging%20bundle%20for%20iPhone%2015">Recommend a charging bundle</Link><Link href="/chat-demo?q=Is%20AC-65W%20compatible%20with%20MacBook%20Pro%2014">Check compatibility</Link><Link href="/chat-demo?q=order%20ORD-10023%20tracking%204821">Track my order</Link></div></div><footer><Link href="/chat-demo">Open full conversation <span>→</span></Link></footer></aside> : null}
+      {widgetOpen ? <aside className="store-widget" aria-label="ShopPilot AI Assistant"><header><div><i>✦</i><strong>ShopPilot AI Assistant</strong><span>Online · synthetic demo</span></div><button aria-label="Close assistant" onClick={() => setWidgetOpen(false)}>×</button></header><div className="store-widget-body"><p className="widget-bubble">Hi! I can help you find the right accessory, check compatibility, or look up a demo order.</p><div className="widget-prompts"><Link href="/chat-demo?from=store&q=Recommend%20a%20charging%20bundle%20for%20iPhone%2015">Recommend a charging bundle</Link><Link href="/chat-demo?from=store&q=Is%20AC-65W%20compatible%20with%20MacBook%20Pro%2014">Check compatibility</Link><Link href="/chat-demo?from=store&q=order%20ORD-10023%20tracking%204821">Track my order</Link></div></div><footer><Link href="/chat-demo?from=store">Open full conversation <span>→</span></Link></footer></aside> : null}
       <button className="store-widget-trigger" aria-label="Open ShopPilot AI Assistant" onClick={() => setWidgetOpen(true)}><span>✦</span><em>Ask ShopPilot AI</em></button>
     </main>
   );

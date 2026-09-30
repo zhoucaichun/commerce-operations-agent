@@ -23,6 +23,14 @@ class NextWebBridgeTests(unittest.TestCase):
         self.assertIn("isAgentIntent", page)
         self.assertIn("AgentResultCard", page)
 
+    def test_storefront_chat_uses_store_context_and_return_path(self):
+        page = (WEB / "app" / "chat-demo" / "page.tsx").read_text(encoding="utf-8")
+        store = (WEB / "app" / "store" / "page.tsx").read_text(encoding="utf-8")
+        self.assertIn('searchParams.get("from") === "store"', page)
+        self.assertIn('backHref={fromStore ? "/store" : "/start"}', page)
+        self.assertIn('homeHref={fromStore ? "/store" : "/"}', page)
+        self.assertIn("/chat-demo?from=store", store)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -266,6 +266,8 @@ export default function ChatDemoPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const fromStore = searchParams.get("from") === "store";
+  const assistantName = fromStore ? "ShopPilot AI Assistant" : "ShopPilot 3C";
 
   const initialQuery = searchParams.get("q")?.trim() || "";
   const initialConversationId = searchParams.get("conversation_id")?.trim() || "";
@@ -637,11 +639,13 @@ export default function ChatDemoPage() {
   }
 
   return (
-    <main className="page-shell">
+    <main className={fromStore ? "page-shell storefront-chat" : "page-shell"}>
       <SiteHeader
-        backHref="/start"
-        backLabel="Back"
-        rightAction={{ href: "/start", label: "New Search", variant: "secondary" }}
+        backHref={fromStore ? "/store" : "/start"}
+        backLabel={fromStore ? "Back to store" : "Back"}
+        homeHref={fromStore ? "/store" : "/"}
+        homeLabel={fromStore ? "ShopPilot 3C Store" : "Home"}
+        rightAction={{ href: fromStore ? "/store" : "/start", label: fromStore ? "Continue shopping" : "New Search", variant: "secondary" }}
       />
 
       <div className="chat-shell">
@@ -650,11 +654,11 @@ export default function ChatDemoPage() {
             <div className="brand-mark">3C</div>
             <div>
               <div style={{ fontSize: 26, fontWeight: 700 }}>
-                ShopPilot 3C
+                {assistantName}
               </div>
               <div className="chat-status">
                 <span className="status-dot">o</span>{" "}
-                {useMock ? "Mock mode" : "Live Dify mode"}
+                {fromStore ? "ShopPilot 3C Store · online" : useMock ? "Mock mode" : "Live Dify mode"}
                 {conversationId ? ` | Conversation ${conversationId}` : ""}
               </div>
             </div>
@@ -697,10 +701,11 @@ export default function ChatDemoPage() {
             <section className="empty-chat-card">
               <div className="brand-mark">3C</div>
               <div>
-                <h2>Ask ShopPilot 3C</h2>
+                <h2>Ask {assistantName}</h2>
                 <p>
-                  Start with a product need, budget, device model, or usage
-                  scenario, and I will recommend matching 3C accessories.
+                  {fromStore
+                    ? "Ask about products, compatibility, delivery policy, or a simulated order."
+                    : "Start with a product need, budget, device model, or usage scenario, and I will recommend matching 3C accessories."}
                 </p>
               </div>
               <div>

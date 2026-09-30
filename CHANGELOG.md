@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Added the original ShopPilot 3C Store storefront mock with a floating AI Assistant preview and support entry points.
+- Styled store-originated full conversations in the matching storefront theme and corrected their return path to the simulated store.
 - Added a synthetic two-merchant B2B demonstration: consumer Widget, Merchant Console, merchant-scoped Agent state and simulated ticket handling.
 - Added B2B product, architecture and delivery-plan documentation, including explicit production boundaries.
 
