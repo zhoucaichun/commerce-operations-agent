@@ -16,11 +16,13 @@ class NextWebBridgeTests(unittest.TestCase):
         self.assertIn("COMMERCE_AGENT_API_BASE_URL", client)
         self.assertNotIn("NEXT_PUBLIC_COMMERCE_AGENT_DEMO_TOKEN", client)
 
-    def test_chat_page_routes_operations_to_agent_without_removing_dify(self):
+    def test_chat_page_routes_store_context_to_agent_without_removing_legacy_dify(self):
         page = (WEB / "app" / "chat-demo" / "page.tsx").read_text(encoding="utf-8")
         self.assertIn('fetch("/api/dify/chat"', page)
         self.assertIn('fetch("/api/agent/chat"', page)
         self.assertIn("isAgentIntent", page)
+        self.assertIn("shouldUseCommerceAgent", page)
+        self.assertIn("fromStore || isAgentIntent(query)", page)
         self.assertIn("AgentResultCard", page)
 
     def test_storefront_chat_uses_store_context_and_return_path(self):

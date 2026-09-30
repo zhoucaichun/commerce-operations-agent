@@ -1,0 +1,31 @@
+﻿case_id,user_query,intent_label,expected_keypoints,should_ask_followup,should_handoff,difficulty,notes,followup_user_reply,expected_after_followup_keypoints
+E020,Is 45W enough for MacBook Air M2?,compatibility,Yes for MacBook Air; recommend SKU004,N,N,Easy,抽样回归集R01; 兼容性低分回归,,
+E022,Does this USB-C hub work with iPad Pro?,compatibility,SKU020/021 works if iPad Pro has USB-C,N,N,Easy,抽样回归集R02; 兼容性低分回归,,
+E026,Does the 100W cable charge Steam Deck?,compatibility,Yes; SKU010/009 compatible,N,N,Easy,抽样回归集R03; 兼容性低分回归,,
+E029,Can this charger fast charge Samsung S24?,compatibility,SKU027 yes; other PD chargers may work but Samsung protocol may differ,N,N,Medium,抽样回归集R04; 兼容性低分回归,,
+E032,Can I use the global adapter in Japan?,compatibility,Yes if plug format supported; not voltage conversion for appliances,N,N,Medium,抽样回归集R05; 兼容性低分回归,,
+E035,Will the ring light work without a wall charger?,compatibility,needs USB power source,N,N,Easy,抽样回归集R06; 兼容性低分回归,,
+E068,Can the 20W charger charge iPad Pro?,compatibility,it can charge but may be slower; 30W/45W better,N,N,Medium,抽样回归集R07; 兼容性低分回归,,
+E070,Can this global adapter be used in Europe and the UK?,compatibility,Yes multi-country support,N,N,Easy,抽样回归集R08; 兼容性低分回归,,
+E078,Can I use the magnetic charger with AirPods?,compatibility,SKU001 supports AirPods with wireless charging case,N,N,Easy,抽样回归集R09; 兼容性低分回归,,
+E079,Is the magnetic case compatible with wireless charging?,compatibility,SKU026 MagSafe case designed for magnetic charging,N,N,Easy,抽样回归集R10; 兼容性低分回归,,
+E007,"I have Samsung S24, what should I buy for fast charging?",recommendation,recommend SKU027 and SKU028; mention USB-C,N,N,Easy,抽样回归集R11; 推荐低分回归,,
+E011,Can you recommend a charging bundle for iPhone 15?,recommendation,charger + cable; SKU002/003 + SKU009,N,N,Easy,抽样回归集R12; 推荐低分回归,,
+E013,What should I buy for long flights with my iPhone 13?,recommendation,recommend power bank SKU012 and long cable SKU008,N,N,Medium,抽样回归集R13; 推荐低分回归,,
+E060,Recommend something for my Apple Watch when I travel,recommendation,SKU031 or SKU030,N,N,Easy,抽样回归集R14; 推荐低分回归,,
+E074,I want a budget Bluetooth speaker,recommendation,SKU035,N,N,Easy,抽样回归集R15; 推荐低分回归,,
+E039,How much is shipping to Canada if my order is small?,policy,shipping fee calculated at checkout under threshold,N,N,Medium,抽样回归集R16; 政策高分防回归,,
+E040,Do I need to pay customs?,policy,may apply depending local regulations; usually not included unless stated,N,N,Medium,抽样回归集R17; 政策高分防回归,,
+E047,How long does refund take?,policy,5-10 business days after item received and inspected,N,N,Easy,抽样回归集R18; 政策高分防回归,,
+E075,Can I return a clearance item?,policy,generally not eligible unless defective,N,N,Easy,抽样回归集R19; 政策高分防回归,,
+E080,How many days do refunds take after you receive the return?,policy,5-10 business days,N,N,Easy,抽样回归集R20; 政策高分防回归,,
+E082,"Your charger burned my desk, what are you going to do?",after_sales,high-risk complaint; apologize; collect info; transfer to human; no liability admission,N,Y,High,抽样回归集R21; 高风险转人工回归,,
+E088,Can your adapter work with hospital equipment?,after_sales,out of scope; no guarantee; transfer if necessary,N,Y,High,抽样回归集R22; 高风险转人工回归,,
+E083,Can you tell me if this is 100 percent safe for my baby room?,after_sales,cannot guarantee absolute safety; provide specs; suggest human if needed,N,Y,High,抽样回归集R23; 高风险转人工回归,,
+E056,I received the wrong item,after_sales,contact support within 7 days with order number and photos,N,Y,High,抽样回归集R24; 高风险转人工回归,,
+E057,An item is missing from my package,after_sales,contact support within 7 days; provide order number and package photos,N,Y,High,抽样回归集R25; 高风险转人工回归,,
+E005,Which charger is better for iPad Pro and phone together?,recommendation,recommend dual-port SKU005 or 100W SKU006,Y,N,Medium,ask budget or travel need; 抽样回归集R26; 追问与多轮回归,"I use an iPad Pro and iPhone 15, and I want to charge both at the same time.",recommend dual-port SKU005 or 100W SKU006
+E006,Any accessories for work from home with MacBook?,recommendation,recommend hub/stand/webcam/light bar,Y,N,Hard,multi-item recommendation; 抽样回归集R27; 追问与多轮回归,I mainly need a USB-C hub and a laptop stand for my MacBook desk setup.,recommend hub/stand/webcam/light bar
+E012,"I need a setup for my desk, maybe stand and charger",recommendation,recommend SKU018/019 + charger based on device,Y,N,Medium,抽样回归集R28; 追问与多轮回归,"I use a MacBook Air and iPhone 15, and I want a cleaner desk setup.",recommend SKU018/019 + charger based on device
+E014,I want one charger for my laptop and phone,recommendation,recommend SKU005 or SKU006; explain power split,Y,N,Medium,抽样回归集R29; 追问与多轮回归,"I use a MacBook Air M2 and iPhone 15, mostly for travel.",recommend SKU005 or SKU006; explain power split
+E015,Any cheap accessories under $15?,recommendation,"recommend lower-priced items like cables, organizer, glass",Y,N,Medium,ask device/use; 抽样回归集R30; 追问与多轮回归,I use an iPhone 15 and want a cheap useful accessory under $15.,"recommend lower-priced items like cables, organizer, glass"

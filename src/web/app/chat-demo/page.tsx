@@ -61,6 +61,10 @@ function buildAgentPayload(query: string, threadId: string) {
   return { thread_id: threadId, message: query, slots };
 }
 
+function shouldUseCommerceAgent(query: string, fromStore: boolean) {
+  return fromStore || isAgentIntent(query);
+}
+
 async function requestAgent(query: string, threadId: string) {
   const response = await fetch("/api/agent/chat", {
     method: "POST",
@@ -344,7 +348,7 @@ export default function ChatDemoPage() {
     }
 
     async function runInitialQuery() {
-      if (mockEnabled && !isAgentIntent(initialQuery)) {
+      if (mockEnabled && !shouldUseCommerceAgent(initialQuery, fromStore)) {
         setMessages([
           { role: "user", message: initialQuery, meta: "You | just now" },
           {
@@ -361,7 +365,7 @@ export default function ChatDemoPage() {
       }
 
       try {
-        if (isAgentIntent(initialQuery)) {
+        if (shouldUseCommerceAgent(initialQuery, fromStore)) {
           const agentResult = await requestAgent(initialQuery, `web-agent-${crypto.randomUUID()}`);
           setLiveRecommendation(null);
           setMessages([
@@ -424,7 +428,7 @@ export default function ChatDemoPage() {
           }
         ]);
       } catch (error) {
-        const errorCopy = isAgentIntent(initialQuery) ? buildAgentErrorCopy(error) : buildErrorCopy(error);
+        const errorCopy = shouldUseCommerceAgent(initialQuery, fromStore) ? buildAgentErrorCopy(error) : buildErrorCopy(error);
         setLiveRecommendation(null);
         setMessages([
           { role: "user", message: initialQuery, meta: "You | just now" },
@@ -453,6 +457,7 @@ export default function ChatDemoPage() {
     searchParams,
     storageKey,
     usageScenario
+    , fromStore
   ]);
 
   useEffect(() => {
@@ -483,7 +488,7 @@ export default function ChatDemoPage() {
     ]);
     setIsSubmitting(true);
 
-    if (isAgentIntent(trimmed)) {
+    if (shouldUseCommerceAgent(trimmed, fromStore)) {
       try {
         const agentResult = await requestAgent(trimmed, `web-agent-${crypto.randomUUID()}`);
         setMessages((current) => {

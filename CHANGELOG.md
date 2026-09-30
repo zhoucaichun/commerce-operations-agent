@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Migrated the reviewed Dify synthetic catalogue (55 products), policy set (35 records), and 145 evaluation prompts into this repository; no Dify API key or real merchant data was copied.
+- Added deterministic `recommend_products` ranking and expanded compatibility/policy lookup to use the migrated synthetic records.
+- Routed all ShopPilot Store-originated full-chat questions to the Commerce Agent; the old Dify route is now a historical standalone comparison path only.
+- Added Dify migration traceability and a runnable ShopPilot functional MVP demo guide.
+
 - Added the original ShopPilot 3C Store storefront mock with a floating AI Assistant preview and support entry points.
 - Styled store-originated full conversations in the matching storefront theme and corrected their return path to the simulated store.
 - Added a synthetic two-merchant B2B demonstration: consumer Widget, Merchant Console, merchant-scoped Agent state and simulated ticket handling.

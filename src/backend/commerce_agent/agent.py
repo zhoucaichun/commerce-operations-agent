@@ -85,6 +85,8 @@ class CommerceAgent:
                 response = self._handle_policy(request, state, trace, summaries, request_id)
             elif self._is_ticket_intent(text):
                 response = self._handle_ticket(request, state, trace, summaries, request_id)
+            elif self._is_recommendation_intent(text):
+                response = self._handle_recommendation(request, state, trace, summaries, request_id)
             elif self._is_product_intent(text):
                 response = self._handle_product(request, state, trace, summaries, request_id)
             else:
@@ -230,8 +232,16 @@ class CommerceAgent:
         )
 
     def _handle_policy(self, request, state, trace, summaries, request_id):
-        topic = "warranty" if any(word in request.message.lower() for word in ("保修", "warranty")) else "return"
-        region = request.slots.get("region", "CN")
+        text = request.message.lower()
+        if any(word in text for word in ("shipping", "delivery", "logistics", "ship to")):
+            topic = "shipping"
+        elif any(word in text for word in ("warranty", "guarantee")):
+            topic = "warranty"
+        elif any(word in text for word in ("coupon", "discount", "student")):
+            topic = "promotion"
+        else:
+            topic = "return"
+        region = request.slots.get("region") or request.slots.get("country") or ("US" if any(word in text for word in ("us", "united states")) else "CN")
         result = self._call_tool(
             "policy_search", {"topic": topic, "region": region}, request, request_id, trace, summaries
         )
@@ -252,6 +262,27 @@ class CommerceAgent:
             request_id=request_id,
             thread_id=request.thread_id,
         )
+
+    def _handle_recommendation(self, request, state, trace, summaries, request_id):
+        device = request.slots.get("device") or request.slots.get("device_model") or self._find_device(request.message) or ""
+        country = request.slots.get("country") or request.slots.get("region") or "US"
+        budget = request.slots.get("budget") or request.slots.get("budget_text") or request.message
+        usage_scenario = request.slots.get("usage_scenario") or ""
+        category = self._product_query(request.message)
+        result = self._call_tool(
+            "recommend_products",
+            {"query": request.message, "device": device, "country": country, "budget": budget, "usage_scenario": usage_scenario, "category": category},
+            request, request_id, trace, summaries,
+        )
+        products = result["products"]
+        if not products:
+            return AgentResponse(status="needs_input", answer="I could not find a synthetic catalogue match. Please add a device model, category, country, or budget.", request_id=request_id, thread_id=request.thread_id)
+        formatted = "; ".join(
+            f"{item['sku']} {item['name']}" + (f" (${item['price_usd']:.2f})" if isinstance(item.get("price_usd"), (int, float)) else "")
+            for item in products
+        )
+        qualifier = f" for {device}" if device else ""
+        return AgentResponse(status="completed", answer=f"From the migrated synthetic ShopPilot catalogue, my recommended match{qualifier} is: {formatted}. These are demonstration-only products and availability; no real Shopify catalogue or inventory was queried.", request_id=request_id, thread_id=request.thread_id)
 
     def _handle_product(self, request, state, trace, summaries, request_id):
         query = request.slots.get("query") or self._product_query(request.message)
@@ -365,11 +396,11 @@ class CommerceAgent:
 
     @staticmethod
     def _is_compatibility_intent(text):
-        return any(word in text for word in ("兼容", "能用", "适配", "compatible", "charger for"))
+        return any(word in text for word in ("兼容", "能用", "适配", "compatible", "charger for", "work with", "will work"))
 
     @staticmethod
     def _is_policy_intent(text):
-        return any(word in text for word in ("政策", "退货政策", "退换", "保修", "return policy", "warranty"))
+        return any(word in text for word in ("政策", "退货政策", "退换", "保修", "return policy", "warranty", "shipping", "delivery", "student discount", "coupon"))
 
     @staticmethod
     def _is_ticket_intent(text):
@@ -378,6 +409,10 @@ class CommerceAgent:
     @staticmethod
     def _is_product_intent(text):
         return any(word in text for word in ("商品", "充电器", "线", "推荐", "sku", "charger", "cable"))
+
+    @staticmethod
+    def _is_recommendation_intent(text):
+        return any(word in text for word in ("recommend", "recommendation", "best", "bundle", "under $", "accessory", "which charger", "which cable", "want a", "need a", "i use an"))
 
     @staticmethod
     def _find_order_id(message):
@@ -391,12 +426,12 @@ class CommerceAgent:
 
     @staticmethod
     def _find_sku(message):
-        match = re.search(r"\b(AC-(?:65|100)W|CB-C2C-2M)\b", message.upper())
+        match = re.search(r"\b(AC-(?:65|100)W|CB-C2C-2M|SKU[0-9]{3})\b", message.upper())
         return match.group(1) if match else None
 
     @staticmethod
     def _find_device(message):
-        match = re.search(r"(MacBook(?: Pro)?(?: [0-9]{2})?|iPad(?: Pro)?|USB-C(?: 接口)?)", message, re.I)
+        match = re.search(r"(MacBook(?: (?:Air|Pro))?(?: [A-Z0-9]+)?|iPhone(?: [0-9]{1,2})?(?: Pro)?|iPad(?: Pro)?|Samsung Galaxy S[0-9]+|Google Pixel [0-9]+|USB-C(?: 接口)?)", message, re.I)
         return match.group(1) if match else None
 
     @staticmethod

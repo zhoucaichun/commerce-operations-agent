@@ -14,7 +14,13 @@ Preview the original Shopify-style ShopPilot 3C storefront mock at `/store`. Its
 
 The B2B product demonstration now exposes two deliberately different entries: `/widget?merchant=demo-3c-store` is a consumer-facing, embeddable Widget simulation, while `/console` is the merchant staff Console. Switch between the two synthetic merchants and roles to verify that orders, tickets, metrics and Widget configuration remain scoped to the selected merchant. The role selector is a demonstration aid, not OIDC or production authentication; see `docs/B2B_DEMO_IMPLEMENTATION_PLAN.md`.
 
-The production-facing Next.js source baseline is in `src/web`. It is copied from the existing ShopPilot 3C frontend without modifying the AIPM source project. Its chat page keeps Dify for recommendations and routes order, shipment, policy, compatibility, and handoff intents to the server-side `/api/agent/chat` proxy; see `docs/WEB_DUAL_ROUTING.md`.
+The production-facing Next.js source baseline is in `src/web`. It is copied from the existing ShopPilot 3C frontend without modifying the AIPM source project. Store-originated conversations (`/chat-demo?from=store`) route every question, including recommendations, to the server-side `/api/agent/chat` proxy. The legacy Dify proxy remains only for comparison with the historical standalone page and is not in the ShopPilot Store customer flow; see `docs/DIFY_MIGRATION.md`.
+
+## ShopPilot functional MVP route
+
+The product names are fixed for the demo: `ShopPilot 3C Store` is the simulated merchant storefront, `ShopPilot AI Assistant` is its consumer-facing assistant, and `ShopPilot Commerce Agent Console` is the merchant employee interface. Start the FastAPI API, then start `src/web` on port 3000 and open `/store`. The assistant links to `/chat-demo?from=store`, which now uses the Agent for catalogue recommendation, compatibility, policy, verified synthetic order lookup, and safe handoff.
+
+The Agent packages 55 reviewed synthetic products, 35 reviewed synthetic policies, and 145 historical Dify evaluation prompts as repository assets. It adds three legacy safety-test products and two legacy policies, for 58 products and 37 policies at runtime. These assets are not real Shopify, merchant, customer, order, or inventory data. Exact migration scope and the test script are in `docs/DIFY_MIGRATION.md` and `docs/DEMO_GUIDE.md`.
 
 Open `http://127.0.0.1:8000/` after starting the API or Compose stack. The bundled frontend provides safe chat, optional order ID/suffix fields, simulated-ticket idempotency input, synthetic-token input, tool summaries, and explicit handoff results. It only calls the same-origin `/api/v1/chat` API and has no direct merchant-system integration.
 

@@ -1,0 +1,101 @@
+﻿case_id,user_query,intent_label,expected_keypoints,should_ask_followup,should_handoff,difficulty,notes,followup_user_reply,expected_after_followup_keypoints
+E001,I use an iPhone 15 and want a charger under $25,recommendation,recommend SKU002 or SKU003; mention USB-C; budget fit,N,N,Easy,basic recommendation,,
+E002,What charger should I buy for my MacBook Air M2 when traveling?,recommendation,recommend SKU004 or SKU005; portable; laptop support,Y,N,Medium,ask budget if missing,"My budget is under $60, and I prefer a compact charger for travel.",recommend SKU004 or SKU005; portable; laptop support
+E003,Need a power bank for my iPhone for daily commute under $40,recommendation,recommend SKU012 or SKU014 depending model; portability,Y,N,Medium,ask if iPhone 12+ for magnetic,I use an iPhone 14 and prefer something lightweight for daily commute.,recommend SKU012 or SKU014 depending model; portability
+E004,I want a cable for my iPhone 14,recommendation,recommend SKU007 or SKU008; Lightning not USB-C,N,N,Easy,,,
+E005,Which charger is better for iPad Pro and phone together?,recommendation,recommend dual-port SKU005 or 100W SKU006,Y,N,Medium,ask budget or travel need,"I use an iPad Pro and iPhone 15, and I want to charge both at the same time.",recommend dual-port SKU005 or 100W SKU006
+E006,Any accessories for work from home with MacBook?,recommendation,recommend hub/stand/webcam/light bar,Y,N,Hard,multi-item recommendation,I mainly need a USB-C hub and a laptop stand for my MacBook desk setup.,recommend hub/stand/webcam/light bar
+E007,"I have Samsung S24, what should I buy for fast charging?",recommendation,recommend SKU027 and SKU028; mention USB-C,N,N,Easy,,,
+E008,Looking for a gift for someone with AirPods Pro 2,recommendation,recommend SKU032 and maybe wireless charger if relevant,Y,N,Medium,ask budget,"My budget is under $40, and I want something practical for AirPods Pro 2.",recommend SKU032 and maybe wireless charger if relevant
+E009,Best charger for MacBook Pro 14?,recommendation,recommend SKU006 ideally; mention wattage,N,N,Easy,,,
+E010,I need something for video meetings on my laptop,recommendation,recommend SKU036 or SKU037 or SKU054,Y,N,Medium,ask budget/quality,"I need a webcam for clear video calls, budget under $70.",recommend SKU036 or SKU037 or SKU054
+E011,Can you recommend a charging bundle for iPhone 15?,recommendation,charger + cable; SKU002/003 + SKU009,N,N,Easy,,,
+E012,"I need a setup for my desk, maybe stand and charger",recommendation,recommend SKU018/019 + charger based on device,Y,N,Medium,,"I use a MacBook Air and iPhone 15, and I want a cleaner desk setup.",recommend SKU018/019 + charger based on device
+E013,What should I buy for long flights with my iPhone 13?,recommendation,recommend power bank SKU012 and long cable SKU008,N,N,Medium,,,
+E014,I want one charger for my laptop and phone,recommendation,recommend SKU005 or SKU006; explain power split,Y,N,Medium,,"I use a MacBook Air M2 and iPhone 15, mostly for travel.",recommend SKU005 or SKU006; explain power split
+E015,Any cheap accessories under $15?,recommendation,"recommend lower-priced items like cables, organizer, glass",Y,N,Medium,ask device/use,I use an iPhone 15 and want a cheap useful accessory under $15.,"recommend lower-priced items like cables, organizer, glass"
+E016,Can I use this wireless charger with iPhone 13?,compatibility,SKU001 or SKU014 works with iPhone 13 magnetic charging,N,N,Easy,,,
+E017,Does the 20W charger work for iPhone 15?,compatibility,SKU002 compatible; USB-C charging,N,N,Easy,,,
+E018,Will the Lightning cable work with iPhone 15?,compatibility,No; iPhone 15 uses USB-C; suggest SKU009,N,N,Easy,,,
+E019,Can the 30W charger charge my iPad Air?,compatibility,Yes; SKU003 suitable,N,N,Easy,,,
+E020,Is 45W enough for MacBook Air M2?,compatibility,Yes for MacBook Air; recommend SKU004,N,N,Easy,,,
+E021,Can the 45W charger charge MacBook Pro 14?,compatibility,may charge slowly or not ideal; suggest SKU006,N,N,Medium,,,
+E022,Does this USB-C hub work with iPad Pro?,compatibility,SKU020/021 works if iPad Pro has USB-C,N,N,Easy,,,
+E023,Will the USB-C to HDMI adapter work with my phone?,compatibility,depends on whether phone supports video out; ask model,Y,N,Medium,,My phone is a Samsung S24.,depends on whether phone supports video out; ask model
+E024,Can I use the Apple Watch charger for my iPhone?,compatibility,No; watch charger only for Apple Watch,N,N,Easy,,,
+E025,Will the magnetic power bank stick to iPhone 11?,compatibility,not native MagSafe; ask if magnetic case used; alignment may be weaker,Y,N,Medium,,I use a regular iPhone 11 without a magnetic case.,not native MagSafe; ask if magnetic case used; alignment may be weaker
+E026,Does the 100W cable charge Steam Deck?,compatibility,Yes; SKU010/009 compatible,N,N,Easy,,,
+E027,Can I use the travel adapter with a hair dryer?,compatibility,not a voltage converter for high-power appliances; warn carefully,N,Y,High,safety/risk,,
+E028,Does the screen protector for iPhone 15 Pro fit iPhone 15?,compatibility,No; different model,N,N,Easy,,,
+E029,Can this charger fast charge Samsung S24?,compatibility,SKU027 yes; other PD chargers may work but Samsung protocol may differ,N,N,Medium,,,
+E030,Will the 65W power bank charge my laptop?,compatibility,Yes for many USB-C laptops like MacBook Air; ask exact model if needed,Y,N,Medium,,My laptop is a MacBook Air M2.,Yes for many USB-C laptops like MacBook Air; ask exact model if needed
+E031,Is the USB-A to USB-C cable good for iPhone 15?,compatibility,it can charge if charger supports; but USB-C to USB-C better for fast charging,N,N,Medium,,,
+E032,Can I use the global adapter in Japan?,compatibility,Yes if plug format supported; not voltage conversion for appliances,N,N,Medium,,,
+E033,Will the laptop sleeve fit MacBook Air 15?,compatibility,SKU048 yes,N,N,Easy,,,
+E034,Can the 6-in-1 hub do 4K HDMI on MacBook Air?,compatibility,Yes if host supports; mention pass-through conditions,N,N,Medium,,,
+E035,Will the ring light work without a wall charger?,compatibility,needs USB power source,N,N,Easy,,,
+E036,How long does shipping to the US take?,policy,5-8 business days standard; processed in 1-2 business days,N,N,Easy,,,
+E037,Do you offer free shipping?,policy,free shipping over USD49 for eligible regions,N,N,Easy,,,
+E038,Can I get express shipping to the US?,policy,2-4 business days after processing,N,N,Easy,,,
+E039,How much is shipping to Canada if my order is small?,policy,shipping fee calculated at checkout under threshold,N,N,Medium,,,
+E040,Do I need to pay customs?,policy,may apply depending local regulations; usually not included unless stated,N,N,Medium,,,
+E041,Can you ship to a PO box?,policy,some carriers don't support; physical address preferred,N,N,Easy,,,
+E042,Can I change my address after ordering?,policy,possible before shipment; contact support asap,N,N,Easy,,,
+E043,Why did my package come separately?,policy,split shipment due to warehouse/item type,N,N,Easy,,,
+E044,What is your return policy?,policy,30-day return if unused and original packaging,N,N,Easy,,,
+E045,Can I return an opened item?,policy,depends; opened consumables generally not eligible; ask item details if needed,Y,N,Medium,,"It is a charger, I opened the box but did not use it.",depends; opened consumables generally not eligible; ask item details if needed
+E046,Who pays return shipping?,policy,merchant covers if defective/shipping error; customer may pay otherwise,N,N,Easy,,,
+E047,How long does refund take?,policy,5-10 business days after item received and inspected,N,N,Easy,,,
+E048,Do chargers have warranty?,policy,12-18 months depending on product listing,N,N,Easy,,,
+E049,How do I claim warranty?,policy,"provide order number, issue, photos/video to support",N,N,Easy,,,
+E050,Can I use two coupon codes?,policy,only one discount code per order unless stated otherwise,N,N,Easy,,,
+E051,Can sale items use extra discount?,policy,some may not; checkout rules apply,N,N,Easy,,,
+E052,Do you have a first-order discount?,policy,eligible new customers may receive one; shown on site/checkout,N,N,Easy,,,
+E053,Is there a bundle discount for charger and cable?,policy,selected bundle promos may exist; shown on product page/checkout,N,N,Easy,,,
+E054,What if my item arrives damaged?,after_sales,contact support within 7 days with photos,N,Y,High,,,
+E055,"My tracking hasn't updated for 3 days, what should I do?",after_sales,tracking can take 24-72h; if still no update contact support,N,N,Medium,,,
+E056,I received the wrong item,after_sales,contact support within 7 days with order number and photos,N,Y,High,,,
+E057,An item is missing from my package,after_sales,contact support within 7 days; provide order number and package photos,N,Y,High,,,
+E058,Can you guarantee this hub will definitely work with every monitor?,after_sales,cannot give absolute guarantee; rely on specs; may need model check,N,Y,High,risk boundary,,
+E059,I want the cheapest charger for iPhone 15,recommendation,SKU002 likely best fit; mention cable may be separate,N,N,Easy,,,
+E060,Recommend something for my Apple Watch when I travel,recommendation,SKU031 or SKU030,N,N,Easy,,,
+E061,I need a charger for iPhone 14 and Apple Watch together,recommendation,recommend charger + separate watch charger; ask if one bundle needed,Y,N,Medium,,"I want one travel setup if possible, budget under $60.",recommend charger + separate watch charger; ask if one bundle needed
+E062,"Which is better, 45W or 65W for MacBook Air?",comparison,45W enough for MacBook Air; 65W better for multi-device/future-proof,N,N,Medium,,,
+E063,What cable do I need for Samsung S24?,recommendation,SKU028 or SKU009 depending charger,N,N,Easy,,,
+E064,Can I charge Switch with the 30W charger?,compatibility,Yes generally; SKU003 suitable,N,N,Easy,,,
+E065,Do you ship to Germany?,policy,Yes if country available and standard shipping 4-8 business days,N,N,Easy,,,
+E066,"I live in Australia, can I buy the 65W charger?",policy,check country availability for SKU005 includes AU,N,N,Easy,,,
+E067,I need accessories for streaming,recommendation,"recommend webcam, ring light, mic if available not in catalog; stay within catalog",Y,N,Hard,,I mainly need a webcam and lighting for live streaming.,"recommend webcam, ring light, mic if available not in catalog; stay within catalog"
+E068,Can the 20W charger charge iPad Pro?,compatibility,it can charge but may be slower; 30W/45W better,N,N,Medium,,,
+E069,Will the USB-C hub work with Dell XPS 13?,compatibility,yes if full-featured USB-C,N,N,Easy,,,
+E070,Can this global adapter be used in Europe and the UK?,compatibility,Yes multi-country support,N,N,Easy,,,
+E071,I need a gift under $30 for a colleague with an iPhone,recommendation,"case, screen protector, charger depending model; ask model",Y,N,Medium,,"They use an iPhone 15, and my budget is under $30.","case, screen protector, charger depending model; ask model"
+E072,Do you have any accessories for PS5 storage?,recommendation,recommend SKU041 portable SSD if compatible use case stated carefully,Y,N,Medium,,I mean accessories for expanding storage or carrying game files.,recommend SKU041 portable SSD if compatible use case stated carefully
+E073,Which earbuds are better for office calls?,comparison,SKU034 better due ANC and clear calls,N,N,Easy,,,
+E074,I want a budget Bluetooth speaker,recommendation,SKU035,N,N,Easy,,,
+E075,Can I return a clearance item?,policy,generally not eligible unless defective,N,N,Easy,,,
+E076,What if I already used the product and want to return it?,policy,return depends on condition and reason; likely not eligible if used unless defective,Y,N,Medium,,"I used it once, but it is not defective.",return depends on condition and reason; likely not eligible if used unless defective
+E077,I need one cable for MacBook and iPhone 15,compatibility,SKU009 or SKU010 USB-C to USB-C works for both,N,N,Easy,,,
+E078,Can I use the magnetic charger with AirPods?,compatibility,SKU001 supports AirPods with wireless charging case,N,N,Easy,,,
+E079,Is the magnetic case compatible with wireless charging?,compatibility,SKU026 MagSafe case designed for magnetic charging,N,N,Easy,,,
+E080,How many days do refunds take after you receive the return?,policy,5-10 business days,N,N,Easy,,,
+E081,I am angry because my order never arrived!,after_sales,empathize; ask order number; likely transfer to human,Y,Y,High,emotion escalation,"My order number is ORDER123, and tracking shows no delivery update.",empathize; ask order number; likely transfer to human
+E082,"Your charger burned my desk, what are you going to do?",after_sales,high-risk complaint; apologize; collect info; transfer to human; no liability admission,N,Y,High,,,
+E083,Can you tell me if this is 100 percent safe for my baby room?,after_sales,cannot guarantee absolute safety; provide specs; suggest human if needed,N,Y,High,,,
+E084,I forgot my device model but need a charger,clarification,ask device brand/model before recommendation,Y,N,Easy,,"It is probably an iPhone 15, and I need a wall charger.",ask device brand/model before recommendation
+E085,What should I buy?,clarification,"ask device, budget, usage scenario",Y,N,Easy,,"I use an iPhone 15, budget under $30, mainly for charging.","ask device, budget, usage scenario"
+E086,I need something fast,clarification,ask what device and whether charging/shipping/other,Y,N,Easy,,I need fast charging for my Samsung S24.,ask what device and whether charging/shipping/other
+E087,Do you have student discount?,policy,"if not in KB, avoid fabrication; state only known promo info and suggest checking current offers",N,N,Medium,anti-hallucination,,
+E088,Can your adapter work with hospital equipment?,after_sales,out of scope; no guarantee; transfer if necessary,N,Y,High,,,
+E089,Will this work with my Lenovo Yoga?,compatibility,depends on product; ask which product and model,Y,N,Medium,,I mean a USB-C charger for Lenovo Yoga 7i.,depends on product; ask which product and model
+E090,I need a monitor accessory for studying at night,recommendation,recommend monitor light bar SKU053,N,N,Easy,,,
+E091,Can I charge MacBook Pro 14 and iPhone at the same time with 65W charger?,compatibility,Yes but power splits; acceptable depending load,N,N,Medium,,,
+E092,What should I get for road trips?,recommendation,"car charger, phone mount, power bank",Y,N,Medium,,"I use an iPhone 15, and I need charging accessories for long car trips.","car charger, phone mount, power bank"
+E093,Can I return to the address on the package?,policy,"No, contact support for correct return instructions",N,N,Easy,,,
+E094,Does the webcam work on Mac?,compatibility,SKU036/037 yes,N,N,Easy,,,
+E095,Will the 2m cable charge slower than 1m?,compatibility,not necessarily significantly; both support rated specs if certified,N,N,Medium,,,
+E096,I need accessories for iPhone 15 Pro with MagSafe,recommendation,"recommend SKU026, SKU001, SKU014",N,N,Easy,,,
+E097,Can I use a discount code on top of bundle sale?,policy,generally one code per order; some sale items may not support additional discounts,N,N,Medium,,,
+E098,My package says delivered but I don't have it,after_sales,ask to check address/household and contact support; likely human support if unresolved,Y,Y,High,,"I checked my front desk and mailbox, but still cannot find it.",ask to check address/household and contact support; likely human support if unresolved
+E099,I need the best setup for a digital nomad with MacBook Air and iPhone 15,recommendation,"recommend 65W charger, 100W cable, hub, power bank, sleeve; structured bundle",Y,N,Hard,,"I want a full travel setup, budget around $150.","recommend 65W charger, 100W cable, hub, power bank, sleeve; structured bundle"
+E100,Will this charger damage my battery?,compatibility,state it is designed to charge compatible devices under normal use; no absolute guarantee; use certified products,N,N,Medium,,,

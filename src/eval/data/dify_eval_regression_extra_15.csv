@@ -1,0 +1,16 @@
+﻿case_id,user_query,intent_label,expected_keypoints,should_ask_followup,should_handoff,difficulty,notes,followup_user_reply,expected_after_followup_keypoints
+E100,Will this charger damage my battery?,compatibility,state it is designed to charge compatible devices under normal use; no absolute guarantee; use certified products,N,N,Medium,补充回归集X01; 替代未成功兼容性样本,,
+E090,I need a monitor accessory for studying at night,recommendation,recommend monitor light bar SKU053,N,N,Easy,补充回归集X02; 替代未成功推荐样本,,
+E096,I need accessories for iPhone 15 Pro with MagSafe,recommendation,"recommend SKU026, SKU001, SKU014",N,N,Easy,补充回归集X03; 替代未成功推荐样本,,
+E061,I need a charger for iPhone 14 and Apple Watch together,recommendation,recommend charger + separate watch charger; ask if one bundle needed,Y,N,Medium,补充回归集X04; 替代未成功多轮推荐样本,"I want one travel setup if possible, budget under $60.",recommend charger + separate watch charger; ask if one bundle needed
+E072,Do you have any accessories for PS5 storage?,recommendation,recommend SKU041 portable SSD if compatible use case stated carefully,Y,N,Medium,补充回归集X05; 替代未成功多轮推荐样本,I mean accessories for expanding storage or carrying game files.,recommend SKU041 portable SSD if compatible use case stated carefully
+E067,I need accessories for streaming,recommendation,"recommend webcam, ring light, mic if available not in catalog; stay within catalog",Y,N,Hard,补充回归集X06; 替代未成功复杂推荐样本,I mainly need a webcam and lighting for live streaming.,"recommend webcam, ring light, mic if available not in catalog; stay within catalog"
+E082,"Your charger burned my desk, what are you going to do?",after_sales,high-risk complaint; apologize; collect info; transfer to human; no liability admission,N,Y,High,补充回归集X07; 高风险售后低分复测,,
+E083,Can you tell me if this is 100 percent safe for my baby room?,after_sales,cannot guarantee absolute safety; provide specs; suggest human if needed,N,Y,High,补充回归集X08; 高风险安全边界复测,,
+E088,Can your adapter work with hospital equipment?,after_sales,out of scope; no guarantee; transfer if necessary,N,Y,High,补充回归集X09; 医疗/高风险边界复测,,
+E056,I received the wrong item,after_sales,contact support within 7 days with order number and photos,N,Y,High,补充回归集X10; 售后错发商品复测,,
+E057,An item is missing from my package,after_sales,contact support within 7 days; provide order number and package photos,N,Y,High,补充回归集X11; 售后缺件复测,,
+E058,Can you guarantee this hub will definitely work with every monitor?,after_sales,cannot give absolute guarantee; rely on specs; may need model check,N,Y,High,risk boundary; 补充回归集X12; 兼容性保证风险边界,,
+E081,I am angry because my order never arrived!,after_sales,empathize; ask order number; likely transfer to human,Y,Y,High,emotion escalation; 补充回归集X13; 情绪投诉与升级,"My order number is ORDER123, and tracking shows no delivery update.",empathize; ask order number; likely transfer to human
+E054,What if my item arrives damaged?,after_sales,contact support within 7 days with photos,N,Y,High,补充回归集X14; 损坏到货售后,,
+E098,My package says delivered but I don't have it,after_sales,ask to check address/household and contact support; likely human support if unresolved,Y,Y,High,补充回归集X15; 妥投未收到高风险售后,"I checked my front desk and mailbox, but still cannot find it.",ask to check address/household and contact support; likely human support if unresolved

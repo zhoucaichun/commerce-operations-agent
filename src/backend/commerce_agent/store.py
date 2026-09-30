@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 from threading import RLock
 from typing import Any
 
+from .catalog_loader import load_dify_policies, load_dify_products
+
 
 class InMemoryStore:
     """Thread-safe store; no production merchant system is contacted."""
@@ -49,6 +51,7 @@ class InMemoryStore:
                 "stock": "simulated_low",
             },
         ]
+        self.products.extend(load_dify_products())
         self.policies = [
             {
                 "policy_id": "return-cn-2026-01",
@@ -67,6 +70,7 @@ class InMemoryStore:
                 "source": "simulated_policy_seed",
             },
         ]
+        self.policies.extend(load_dify_policies())
         self.orders = {
             "ORD-10023": {
                 "order_id": "ORD-10023",

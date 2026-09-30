@@ -1,5 +1,11 @@
 # Commerce Operations Agent
 
+## 2026-09 MVP 运行时决策补充
+
+对外售卖的 B 端产品是 **ShopPilot Commerce Agent**，付费客户是跨境 3C 独立站商家。消费者使用商家站内的 **ShopPilot AI Assistant Widget**；客服、运营和管理员使用 **ShopPilot Commerce Agent Console**。它们是不同入口和界面；正式产品可共享统一身份平台，但消费者不登录商家后台。
+
+本 MVP 的店铺客服使用统一 Commerce Agent 运行时：推荐、兼容性、政策、订单/物流与人工接管都通过受控工具完成。原 Dify workflow 只作为可追溯的迁移来源、历史对照和评测基准，不是 ShopPilot Store 的运行时依赖。所有当前数据仍为合成数据，不连接真实 Shopify 或商家系统。
+
 > 2026-09 B2B 产品扩展：本产品的付费客户是跨境 3C 独立站商家。消费者使用嵌入商家网站的 Widget；商家客服、运营和管理员使用 Merchant Console。以下首阶段仅用两家合成商家验证隔离与流程，不接入真实商家数据或系统。
 
 ## B2B 多租户产品定义（第一阶段）
