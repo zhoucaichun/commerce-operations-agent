@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added a Qwen-labelled OpenAI-compatible model configuration path, optional JSON Schema request mode, and local schema/authority validation fallback.
+- Added an explicit `--live` Dify model-evaluation runner for all 145 migrated synthetic cases; its default dry run makes no provider call and reports only dataset/model scope.
+- Added Qwen model-selection, secret-handling, and staged synthetic-evaluation guidance; no real merchant, order, media, or Shopify data is sent to a model.
+
 - Added an optional, bounded OpenAI-compatible model adapter for JSON-validated Agent plans and evidence-grounded answer composition; it defaults to deterministic fallback and never enables commerce operations.
 - Expanded the LangGraph execution path to guard, memory load, typed plan, controlled tool, validation, compose/handoff, and persistence nodes.
 - Added explicit memory deletion/compaction and user-confirmed preference rules, structured simulated handoff priority/SLA fields, complementary bundle selection, a disabled read-only Shopify connector boundary, and a secret-safe production-readiness endpoint.

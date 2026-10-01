@@ -49,9 +49,11 @@ class ModelAdapter:
     """
 
     def __init__(self, transport: Callable[[dict[str, Any]], dict[str, Any]] | None = None) -> None:
+        self.provider = os.getenv("COMMERCE_LLM_PROVIDER", "openai_compatible").strip().lower()
         self.base_url = os.getenv("COMMERCE_LLM_BASE_URL", "").rstrip("/")
         self.api_key = os.getenv("COMMERCE_LLM_API_KEY", "")
         self.model = os.getenv("COMMERCE_LLM_MODEL", "")
+        self.response_mode = os.getenv("COMMERCE_LLM_RESPONSE_MODE", "json_object").strip().lower()
         self.timeout_seconds = float(os.getenv("COMMERCE_LLM_TIMEOUT_SECONDS", "8"))
         self._transport = transport
 
@@ -61,15 +63,24 @@ class ModelAdapter:
 
     @property
     def version(self) -> str:
-        return f"openai-compatible:{self.model}" if self.enabled and self.model else "disabled"
+        return f"{self.provider}:{self.model or 'test-model'}" if self.enabled else "disabled"
 
-    def complete_json(self, system: str, user: str) -> dict[str, Any] | None:
+    def complete_json(self, system: str, user: str, schema: dict[str, Any] | None = None) -> dict[str, Any] | None:
         if not self.enabled:
             return None
+        response_format: dict[str, Any] = {"type": "json_object"}
+        # Qwen DashScope's OpenAI-compatible mode and several approved gateways
+        # support this shape.  Unsupported endpoints safely fail closed below and
+        # the deterministic planner/composer remains in control.
+        if self.response_mode == "json_schema" and schema:
+            response_format = {
+                "type": "json_schema",
+                "json_schema": {"name": "commerce_agent_response", "strict": True, "schema": schema},
+            }
         payload = {
             "model": self.model or "test-model",
             "temperature": 0,
-            "response_format": {"type": "json_object"},
+            "response_format": response_format,
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
         }
         try:
@@ -104,6 +115,7 @@ class Planner:
             "Allowed actions: call_tool, ask_user, handoff. Allowed intents: product, recommendation, compatibility, policy, order, ticket, handoff. "
             "Never perform an operation, invent evidence, or request secret/full identity data.",
             json.dumps({"message": message[:4000], "verified_slots": slots}, ensure_ascii=False),
+            self._plan_schema(),
         )
         validated = self._validate(candidate)
         return validated if validated else self._fallback(message, slots)
@@ -115,6 +127,7 @@ class Planner:
             "Return JSON only: {\"answer\": string}. Rephrase only the supplied answer/evidence. "
             "Do not add facts, claims of live data, commitments, or operational actions.",
             json.dumps({"draft_answer": answer, "evidence": evidence}, ensure_ascii=False),
+            self._compose_schema(),
         )
         if not isinstance(candidate, dict) or not isinstance(candidate.get("answer"), str):
             return answer, False
@@ -126,6 +139,30 @@ class Planner:
         if mentioned_skus - known_skus:
             return answer, False
         return rendered, True
+
+    @staticmethod
+    def _plan_schema() -> dict[str, Any]:
+        return {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["action", "intent", "slots", "missing_slots", "reason_code"],
+            "properties": {
+                "action": {"type": "string", "enum": ["call_tool", "ask_user", "handoff"]},
+                "intent": {"type": "string", "enum": sorted(ALLOWED_INTENTS)},
+                "slots": {"type": "object", "additionalProperties": {"type": ["string", "number", "integer"]}},
+                "missing_slots": {"type": "array", "items": {"type": "string"}, "maxItems": 5},
+                "reason_code": {"type": "string", "maxLength": 100},
+            },
+        }
+
+    @staticmethod
+    def _compose_schema() -> dict[str, Any]:
+        return {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["answer"],
+            "properties": {"answer": {"type": "string", "maxLength": 3000}},
+        }
 
     @staticmethod
     def _validate(candidate: Any) -> ActionPlan | None:

@@ -1,6 +1,7 @@
 from pathlib import Path
 import sys
 import unittest
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -32,6 +33,16 @@ class ModelRuntimeTests(unittest.TestCase):
         self.assertTrue(response.plan["model_used"])
         self.assertEqual(response.plan["intent"], "recommendation")
         self.assertTrue(any(item["tool"] == "recommend_products" for item in response.tool_result_summary))
+
+    def test_qwen_schema_mode_is_explicit_and_still_uses_local_validation(self):
+        received = []
+        with patch.dict("os.environ", {"COMMERCE_LLM_PROVIDER": "qwen_openai_compatible", "COMMERCE_LLM_RESPONSE_MODE": "json_schema"}, clear=False):
+            model = ModelAdapter(lambda payload: received.append(payload) or {"action": "call_tool", "intent": "product", "slots": {}, "missing_slots": [], "reason_code": "test"})
+            plan = Planner(model).plan("show chargers", {})
+        self.assertTrue(plan.model_used)
+        self.assertEqual(model.version, "qwen_openai_compatible:test-model")
+        self.assertEqual(received[0]["response_format"]["type"], "json_schema")
+        self.assertTrue(received[0]["response_format"]["json_schema"]["strict"])
 
     def test_memory_requires_explicit_remember_and_can_be_deleted(self):
         agent = CommerceAgent()

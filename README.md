@@ -8,6 +8,8 @@ Run local regression with `python -m unittest discover -s tests -p "test_*.py" -
 
 The Agent runtime now includes an optional OpenAI-compatible LLM Adapter for typed planning and evidence-grounded composition. It is disabled unless all `COMMERCE_LLM_BASE_URL`, `COMMERCE_LLM_API_KEY`, and `COMMERCE_LLM_MODEL` environment variables are configured; failures safely fall back to deterministic routing. The complete implementation/activation boundary is in `docs/AGENT_PRODUCTION_IMPLEMENTATION.md`.
 
+Qwen is the recommended first text-model baseline for this MVP: it can use the existing OpenAI-compatible transport with an optional JSON Schema request while local validation remains authoritative. The migrated 145-case Dify dataset now has an opt-in model evaluation command: `python src/eval/run_dify_model_eval.py --report reports/dify-model-eval-dry-run.json` performs no network call; add `--live --limit 30` only after configuring an approved provider in the launching PowerShell session. See `docs/QWEN_MODEL_SETUP.md`; it also explains why product/order/policy tools remain deterministic and why voice/image need separate future adapters.
+
 Copy `src/backend/.env.example` to an untracked local environment file and supply only an approved provider configuration when you are ready to evaluate a real model. Do not put a key in Git, the browser, Dify export, or frontend environment variables.
 
 The synthetic evaluation now runs 30 deterministic cases. The web UI includes a read-only synthetic operations summary from `/metrics`, UTC hourly cumulative snapshots, synthetic order/ticket detail cards, and same-request retry for recoverable failures.

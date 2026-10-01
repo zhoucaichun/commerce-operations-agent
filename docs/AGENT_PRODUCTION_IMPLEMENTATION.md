@@ -4,7 +4,7 @@ This document is the implementation record for the ten Agent capabilities. It di
 
 | Capability | Delivered in repository | Activation boundary |
 |---|---|---|
-| 1. Model adapter | OpenAI-compatible `ModelAdapter`, timeout, JSON-only response mode, environment-only configuration, deterministic fallback | Provide an approved provider endpoint/key/model outside Git; run evaluation before enabling |
+| 1. Model adapter | OpenAI-compatible `ModelAdapter`, Qwen-compatible provider label, optional JSON Schema request, local typed validation, timeout, environment-only configuration, deterministic fallback | Provide an approved provider endpoint/key/model outside Git; run the synthetic Dify model evaluation before enabling |
 | 2. Agent loop | LangGraph `guard -> load_memory -> planner -> tool -> validate -> compose/handoff -> persist`; six-step inner tool boundary | Model planner/composer only after evaluation gate passes |
 | 3. Dify migration | Four Dify branch families mapped to typed intents, slots, controlled tools, and regression records | Review/port any later Dify prompt change through versioned tests |
 | 4. Tool harness | Allow-list, typed plan validation, tool-result validation, read-only retry, idempotent simulated ticket, risk handoff | No commerce write is enabled; any new write requires security/product approval |
@@ -23,10 +23,12 @@ Set these only in a local untracked environment file or deployment secret manage
 COMMERCE_LLM_BASE_URL=https://approved-provider.example/v1
 COMMERCE_LLM_API_KEY=provider-secret
 COMMERCE_LLM_MODEL=approved-model-name
+COMMERCE_LLM_PROVIDER=qwen_openai_compatible
+COMMERCE_LLM_RESPONSE_MODE=json_schema
 COMMERCE_LLM_TIMEOUT_SECONDS=8
 ```
 
-The adapter calls the OpenAI-compatible `/chat/completions` endpoint with `temperature: 0` and JSON-object output. It sends only a bounded customer message, verified slots, response draft, and evidence summary. It never sends secrets, raw attachment bytes, full order identity information, or another tenant's data. If configuration is incomplete, network access fails, or model JSON is invalid, the deterministic route and templated answer are used instead.
+The adapter calls the OpenAI-compatible `/chat/completions` endpoint with `temperature: 0` and JSON-object output by default. When an approved endpoint supports it, `COMMERCE_LLM_RESPONSE_MODE=json_schema` requests a strict action-plan/answer schema; local allow-list validation remains authoritative. It sends only a bounded customer message, verified slots, response draft, and evidence summary. It never sends secrets, raw attachment bytes, full order identity information, or another tenant's data. If configuration is incomplete, network access fails, the selected endpoint does not support the schema mode, or model JSON is invalid, the deterministic route and templated answer are used instead. See [QWEN_MODEL_SETUP.md](QWEN_MODEL_SETUP.md) for the explicit synthetic-only evaluation sequence.
 
 ## Dify-to-runtime prompt contract
 
