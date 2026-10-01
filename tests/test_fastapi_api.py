@@ -56,6 +56,11 @@ class FastApiTests(unittest.TestCase):
         self.assertEqual(risk.json()["status"], "handoff")
         self.assertEqual(risk.json()["tool_result_summary"], [])
 
+    def test_production_readiness_never_enables_live_operations(self):
+        response = self.client.get("/api/v1/production-readiness")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["live_operations_enabled"], False)
+
     def test_sqlite_ticket_is_idempotent_across_agent_restarts(self):
         payload = {"thread_id": "ticket", "message": "请转人工客服建立工单", "idempotency_key": "api-ticket-001"}
         first = self.client.post("/api/v1/chat", json=payload).json()

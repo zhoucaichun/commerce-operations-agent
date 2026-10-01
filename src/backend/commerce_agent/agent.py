@@ -27,12 +27,17 @@ class CommerceAgent:
         self.checkpoint_store = checkpoint_store
         self.retry_store = retry_store
 
-    def handle(self, request: ChatRequest, request_id: str | None = None) -> AgentResponse:
+    def handle(self, request: ChatRequest, request_id: str | None = None, planned_intent: str | None = None) -> AgentResponse:
         request_id = request_id or f"req_{uuid4().hex}"
         self.store.increment("chat_requests")
         trace: list[dict[str, Any]] = []
         summaries: list[dict[str, Any]] = []
         state = self._load_state(request.thread_id)
+        if self._forget_memory_request(request.message):
+            state = {"thread_id": request.thread_id, "messages": [], "slots": {}, "preferences": {}, "step_count": 0}
+            self._save_state(request.thread_id, state)
+            self._trace(trace, request_id, request.thread_id, "memory_delete", "confirmed")
+            return AgentResponse(status="completed", answer="I cleared the synthetic conversation memory for this thread. No merchant-system data was changed.", request_id=request_id, thread_id=request.thread_id, trace=trace)
         multimodal = analyze_attachments(request.attachments)
         if multimodal and multimodal["slots"]:
             request = ChatRequest(
@@ -44,6 +49,8 @@ class CommerceAgent:
             )
         state["messages"].append({"role": "user", "summary": self._summarize(request.message)})
         state["slots"].update(request.slots)
+        self._remember_confirmed_preferences(state, request)
+        self._compact_memory(state)
         if multimodal:
             state["slots"].update(multimodal["slots"])
             self._trace(trace, request_id, request.thread_id, "normalize_multimodal", multimodal["mode"])
@@ -90,17 +97,18 @@ class CommerceAgent:
             )
         text = request.message.lower()
         try:
-            if self._is_order_intent(text):
+            intent = planned_intent or self._classify_intent(text)
+            if intent == "order":
                 response = self._handle_order(request, state, trace, summaries, request_id)
-            elif self._is_compatibility_intent(text):
+            elif intent == "compatibility":
                 response = self._handle_compatibility(request, state, trace, summaries, request_id)
-            elif self._is_policy_intent(text):
+            elif intent == "policy":
                 response = self._handle_policy(request, state, trace, summaries, request_id)
-            elif self._is_ticket_intent(text):
+            elif intent == "ticket":
                 response = self._handle_ticket(request, state, trace, summaries, request_id)
-            elif self._is_recommendation_intent(text):
+            elif intent == "recommendation":
                 response = self._handle_recommendation(request, state, trace, summaries, request_id)
-            elif self._is_product_intent(text):
+            elif intent == "product":
                 response = self._handle_product(request, state, trace, summaries, request_id)
             else:
                 handoff = self._handoff(
@@ -389,7 +397,31 @@ class CommerceAgent:
         store.increment(f"handoff:{reason}")
         store.record_handoff(reason)
         CommerceAgent._trace(trace, request_id, thread_id, "human_review", reason, error_code)
-        return {"required": True, "reason": reason, "summary": summary}
+        priority = "urgent" if any(token in reason for token in ("battery", "security", "order_not_verified")) else "high" if "real_" in reason or "tool_error" in reason else "normal"
+        sla_hours = 4 if priority == "urgent" else 24 if priority == "high" else 48
+        return {"required": True, "reason": reason, "summary": summary, "priority": priority, "sla_hours": sla_hours, "lifecycle": "simulated_open"}
+
+    @staticmethod
+    def _forget_memory_request(message: str) -> bool:
+        text = message.lower()
+        return any(term in text for term in ("forget this conversation", "delete my memory", "删除记忆", "清除记忆", "忘记这次对话"))
+
+    @staticmethod
+    def _remember_confirmed_preferences(state: dict[str, Any], request: ChatRequest) -> None:
+        """Only persist a preference after the user explicitly asks to remember it."""
+        if not any(term in request.message.lower() for term in ("remember my", "记住我的", "记住我常用")):
+            return
+        preferences = state.setdefault("preferences", {})
+        for key in ("device", "device_model", "country", "region", "usage_scenario"):
+            value = request.slots.get(key)
+            if value:
+                preferences[key] = value[:128]
+
+    @staticmethod
+    def _compact_memory(state: dict[str, Any]) -> None:
+        messages = state.get("messages", [])
+        if len(messages) > 12:
+            state["messages"] = [{"role": "system", "summary": f"compacted_turns:{len(messages) - 8}"}, *messages[-8:]]
 
     @staticmethod
     def _summarize(message: str) -> str:
@@ -409,6 +441,16 @@ class CommerceAgent:
             if any(keyword in text for keyword in keywords):
                 return reason
         return None
+
+    @staticmethod
+    def _classify_intent(text):
+        if CommerceAgent._is_order_intent(text): return "order"
+        if CommerceAgent._is_compatibility_intent(text): return "compatibility"
+        if CommerceAgent._is_policy_intent(text): return "policy"
+        if CommerceAgent._is_ticket_intent(text): return "ticket"
+        if CommerceAgent._is_recommendation_intent(text): return "recommendation"
+        if CommerceAgent._is_product_intent(text): return "product"
+        return "unsupported"
 
     @staticmethod
     def _is_order_intent(text):
@@ -432,7 +474,7 @@ class CommerceAgent:
 
     @staticmethod
     def _is_recommendation_intent(text):
-        return any(word in text for word in ("recommend", "recommendation", "best", "bundle", "under $", "accessory", "which charger", "which cable", "want a", "need a", "i use an"))
+        return any(word in text for word in ("recommend", "recommendation", "best", "bundle", "under $", "accessory", "which charger", "which cable", "want a", "need a", "i use an", "推荐", "套餐", "套装", "配件"))
 
     @staticmethod
     def _find_order_id(message):

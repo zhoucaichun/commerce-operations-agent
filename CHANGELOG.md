@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Added an optional, bounded OpenAI-compatible model adapter for JSON-validated Agent plans and evidence-grounded answer composition; it defaults to deterministic fallback and never enables commerce operations.
+- Expanded the LangGraph execution path to guard, memory load, typed plan, controlled tool, validation, compose/handoff, and persistence nodes.
+- Added explicit memory deletion/compaction and user-confirmed preference rules, structured simulated handoff priority/SLA fields, complementary bundle selection, a disabled read-only Shopify connector boundary, and a secret-safe production-readiness endpoint.
+- Added the Agent completion/production-activation document and model-runtime regression tests.
+
 - Defined the canonical Agent runtime contract (Model, Planner, Tool use, Memory, Harness), including the distinction between the current deterministic LangGraph MVP and a future model-assisted runtime.
 - Added a Dify workflow migration specification and an Agent evaluation specification, so reviewed Dify prompts/nodes/badcases are source material rather than an unbounded runtime dependency.
 - Corrected README status language: FastAPI, Next.js, Compose, Redis, LangGraph state-machine, CI, and deterministic checks exist; LLM quality, real merchant connectors, production RLS/OIDC, and full release evaluation remain incomplete.

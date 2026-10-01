@@ -107,6 +107,7 @@ class AgentResponse:
     trace: list[dict[str, Any]] = field(default_factory=list)
     multimodal: dict[str, Any] | None = None
     recommendations: list[dict[str, Any]] = field(default_factory=list)
+    plan: dict[str, Any] | None = None
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -119,4 +120,5 @@ class AgentResponse:
             "trace": self.trace,
             "multimodal": self.multimodal,
             "recommendations": self.recommendations,
+            "plan": self.plan,
         }

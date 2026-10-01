@@ -6,6 +6,10 @@ The runnable MVP uses FastAPI, PostgreSQL-backed synthetic state in Compose, Red
 
 Run local regression with `python -m unittest discover -s tests -p "test_*.py" -v` and `python src/eval/run_smoke.py`. For the isolated Compose integration check, start Compose and run `python src/eval/run_compose_smoke.py --restart-api`.
 
+The Agent runtime now includes an optional OpenAI-compatible LLM Adapter for typed planning and evidence-grounded composition. It is disabled unless all `COMMERCE_LLM_BASE_URL`, `COMMERCE_LLM_API_KEY`, and `COMMERCE_LLM_MODEL` environment variables are configured; failures safely fall back to deterministic routing. The complete implementation/activation boundary is in `docs/AGENT_PRODUCTION_IMPLEMENTATION.md`.
+
+Copy `src/backend/.env.example` to an untracked local environment file and supply only an approved provider configuration when you are ready to evaluate a real model. Do not put a key in Git, the browser, Dify export, or frontend environment variables.
+
 The synthetic evaluation now runs 30 deterministic cases. The web UI includes a read-only synthetic operations summary from `/metrics`, UTC hourly cumulative snapshots, synthetic order/ticket detail cards, and same-request retry for recoverable failures.
 
 ## Web interface

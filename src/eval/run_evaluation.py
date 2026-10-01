@@ -21,6 +21,8 @@ BASE_CASES = (
     ("order-unverified", {"thread_id": "eval-order-bad", "message": "order ORD-10023 tracking 0000"}, "handoff"),
     ("ticket-needs-key", {"thread_id": "eval-ticket", "message": "create a human support ticket"}, "needs_input"),
     ("risk-handoff", {"thread_id": "eval-risk", "message": "refund please"}, "handoff"),
+    ("bundle", {"thread_id": "eval-bundle", "message": "recommend a charging bundle for iPhone 15"}, "completed"),
+    ("memory-delete", {"thread_id": "eval-memory-delete", "message": "delete my memory"}, "completed"),
 )
 CASES = tuple((f"{name}-{index}", {**payload, "thread_id": f"{payload['thread_id']}-{index}"}, expected) for index in range(1, 13) for name, payload, expected in BASE_CASES) + BASE_CASES[:2]
 

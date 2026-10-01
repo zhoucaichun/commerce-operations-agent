@@ -102,7 +102,14 @@ class ToolRegistry:
                 score -= 10
             if score or not (device or category or query_tokens): ranked.append({**product, "recommendation_score": score})
         ranked.sort(key=lambda product: (-product["recommendation_score"], product.get("price_usd") is None, product.get("price_usd") or 0, product["sku"]))
-        return {"criteria": {"device": device, "country": country, "budget": budget, "usage_scenario": usage, "category": category}, "products": ranked[:3], "data_source": "dify_synthetic_catalog_migration"}
+        bundle_requested = any(word in query for word in ("bundle", "套装", "套餐", "setup"))
+        if bundle_requested:
+            charger = next((item for item in ranked if "charger" in str(item.get("category", "")).lower()), None)
+            cable = next((item for item in ranked if "cable" in str(item.get("category", "")).lower()), None)
+            selected = [item for item in (charger, cable) if item]
+            selected.extend(item for item in ranked if item not in selected)
+            ranked = selected
+        return {"criteria": {"device": device, "country": country, "budget": budget, "usage_scenario": usage, "category": category, "bundle_requested": bundle_requested}, "products": ranked[:3], "data_source": "dify_synthetic_catalog_migration"}
 
     def _compatibility_check(self, arguments: dict[str, Any]) -> dict[str, Any]:
         sku, device = str(arguments.get("sku", "")).upper().strip(), str(arguments.get("device", "")).strip()

@@ -21,6 +21,7 @@ from .models import ChatRequest, ValidationError
 from .sqlite_store import SQLiteStore
 from .postgres_store import PostgresStore
 from .redis_support import RedisHealth
+from .runtime import production_readiness
 
 
 class ChatPayload(BaseModel):
@@ -92,6 +93,12 @@ def create_app(agent_instance: CommerceAgent | None = None) -> FastAPI:
         except Exception as exc:
             raise HTTPException(status_code=503, detail="synthetic store unavailable") from exc
         return {"status": "ready", "checks": {"storage": "ok", "redis": "ok"}}
+
+    @app.get("/api/v1/production-readiness")
+    def readiness_contract() -> dict[str, Any]:
+        """Return activation gates without exposing secret values or contacting merchants."""
+        gates = production_readiness()
+        return {"mode": "synthetic_mvp", "gates": gates, "live_operations_enabled": False}
 
     @app.get("/metrics")
     def metrics(request: Request) -> dict[str, Any]:
