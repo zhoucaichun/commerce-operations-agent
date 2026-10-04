@@ -9,6 +9,6 @@
 - `source=public_reference_catalog`；`stock=not_connected`。
 - 推荐排序默认降低公开参考条目的权重；ShopPilot 合成商品仍是默认演示商家目录。
 - 前端结果会提示公开参考数据不是商家实时价格或库存。
-- 任何实际商家接入必须走 `docs/PRODUCTION_MERCHANT_DATA.md` 的审批、OAuth/只读同步、租户隔离和审计流程，不能用网页抓取替代。
+- 任何实际商家接入必须走 `docs/integration/PRODUCTION_MERCHANT_DATA.md` 的审批、OAuth/只读同步、租户隔离和审计流程，不能用网页抓取替代。
 
 截至 2026-09-30，参考来源为 [Anker 20W chargers](https://www.anker.com/collections/20w-charger)、[Anker USB-C cables](https://www.anker.com/collections/usb-c-to-usb-c-cable) 和 [Belkin MagSafe chargers](https://www.belkin.com/products/wireless-chargers/magsafe-chargers-accessories/)。价格可能已变化，不能作为报价依据。

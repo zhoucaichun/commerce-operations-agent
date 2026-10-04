@@ -57,4 +57,4 @@ If `model_planner_used` is zero, do not treat the intent score as a model-qualit
 
 ## Production boundary
 
-The Qwen structured-output API supports JSON-object and JSON-schema response modes; use function/tool contracts for model-to-tool decisions and keep local validation as the final authority. The current implementation uses the OpenAI-compatible Chat Completions transport and does not activate Shopify, OIDC, production tenant data or any write operation. See [AGENT_PRODUCTION_IMPLEMENTATION.md](AGENT_PRODUCTION_IMPLEMENTATION.md) and [PRODUCTION_MERCHANT_DATA.md](PRODUCTION_MERCHANT_DATA.md).
+The Qwen structured-output API supports JSON-object and JSON-schema response modes; use function/tool contracts for model-to-tool decisions and keep local validation as the final authority. The current implementation uses the OpenAI-compatible Chat Completions transport and does not activate Shopify, OIDC, production tenant data or any write operation. See [AGENT_PRODUCTION_IMPLEMENTATION.md](AGENT_PRODUCTION_IMPLEMENTATION.md) and [PRODUCTION_MERCHANT_DATA.md](../integration/PRODUCTION_MERCHANT_DATA.md).

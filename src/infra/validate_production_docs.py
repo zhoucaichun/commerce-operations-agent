@@ -3,10 +3,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 REQUIRED = {
-    "docs/PRODUCTION.md": ("nginx -t", "certificate rotation", "Do not copy private keys"),
-    "docs/IDENTITY_PROVIDER_DESIGN.md": ("Approval-gated rollout", "not implemented", "No stage above is implemented"),
+    "docs/operations/PRODUCTION.md": ("nginx -t", "certificate rotation", "Do not copy private keys"),
+    "docs/operations/IDENTITY_PROVIDER_DESIGN.md": ("Approval-gated rollout", "not implemented", "No stage above is implemented"),
     "README.md": ("validate_proxy_config.py", "IDENTITY_PROVIDER_DESIGN.md"),
-    "docs/SECURITY_APPROVAL_CHECKLIST.md": ("Status: **not approved**", "do not add any OIDC provider configuration"),
+    "docs/operations/SECURITY_APPROVAL_CHECKLIST.md": ("Status: **not approved**", "do not add any OIDC provider configuration"),
 }
 
 

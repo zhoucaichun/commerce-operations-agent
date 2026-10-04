@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Reorganized project documentation by product, runtime, integration/data, Agent evaluation, and operations; added `docs/INDEX.md` with a status-aware reading path and updated repository links, documentation tests, and production-document validation paths.
+
 - Added `docs/agent评测/`: a versioned enterprise Agent-evaluation playbook, ShopPilot 3C customer-service/recommendation metric system, and a critical review of recent benchmark research and evaluation frameworks. The documentation explicitly separates deterministic evidence, LLM judging, human calibration, synthetic MVP results, and future real-merchant production metrics.
 
 - Corrected the OpenAI-compatible endpoint builder: service-root URLs now use `/v1/chat/completions`, while URLs already ending in `/v1` remain supported. Added a documented custom-path override and regression tests.

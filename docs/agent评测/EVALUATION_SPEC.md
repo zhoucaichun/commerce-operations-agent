@@ -6,7 +6,7 @@ Current checks validate deterministic routing, tool safety, API/UI behavior, and
 
 Historical Dify prompts and badcases are source material, not automatic pass results. They must be normalized into the case format below and executed against the Commerce Agent runtime.
 
-The expanded enterprise process, ShopPilot 3C metric matrix, literature review, and framework-selection guidance are in [agent评测/README.md](agent评测/README.md). This file remains the concise runtime acceptance contract.
+The expanded enterprise process, ShopPilot 3C metric matrix, literature review, and framework-selection guidance are in [README.md](README.md). This file remains the concise runtime acceptance contract.
 
 ## Case contract
 
