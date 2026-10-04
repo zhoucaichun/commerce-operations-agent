@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added `docs/agent评测/`: a versioned enterprise Agent-evaluation playbook, ShopPilot 3C customer-service/recommendation metric system, and a critical review of recent benchmark research and evaluation frameworks. The documentation explicitly separates deterministic evidence, LLM judging, human calibration, synthetic MVP results, and future real-merchant production metrics.
+
 - Corrected the OpenAI-compatible endpoint builder: service-root URLs now use `/v1/chat/completions`, while URLs already ending in `/v1` remain supported. Added a documented custom-path override and regression tests.
 
 - Added secret-free aggregate LLM adapter diagnostics to live model evaluation reports, distinguishing provider HTTP/network/JSON/response-shape failures from local schema rejection without retaining keys, URLs, prompts, or responses.

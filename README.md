@@ -18,6 +18,8 @@ Copy `src/backend/.env.example` to an untracked local environment file and suppl
 
 The synthetic evaluation now runs 30 deterministic cases. The web UI includes a read-only synthetic operations summary from `/metrics`, UTC hourly cumulative snapshots, synthetic order/ticket detail cards, and same-request retry for recoverable failures.
 
+The enterprise evaluation playbook, ShopPilot-specific metric system, and research/framework review are organised in `docs/agent评测/`. They distinguish the present synthetic MVP evidence from future RAG, model-quality, multi-turn, and real-merchant production evaluation; start at `docs/agent评测/README.md`.
+
 ## Web interface
 
 Preview the original Shopify-style ShopPilot 3C storefront mock at `/store`. Its floating assistant and Support entry open `/chat-demo?from=store`, which uses the same store theme and always returns to `/store`. Product art and catalog labels are synthetic; it does not connect to Shopify or change any real order.
