@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Corrected the OpenAI-compatible endpoint builder: service-root URLs now use `/v1/chat/completions`, while URLs already ending in `/v1` remain supported. Added a documented custom-path override and regression tests.
+
 - Added secret-free aggregate LLM adapter diagnostics to live model evaluation reports, distinguishing provider HTTP/network/JSON/response-shape failures from local schema rejection without retaining keys, URLs, prompts, or responses.
 
 - Added a Qwen-labelled OpenAI-compatible model configuration path, optional JSON Schema request mode, and local schema/authority validation fallback.

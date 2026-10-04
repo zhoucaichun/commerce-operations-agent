@@ -20,14 +20,14 @@ Copy the template without committing your local file. The backend does not auto-
 
 ```powershell
 $env:COMMERCE_LLM_PROVIDER = "qwen_openai_compatible"
-$env:COMMERCE_LLM_BASE_URL = "https://your-approved-provider.example/v1"
+$env:COMMERCE_LLM_BASE_URL = "https://your-approved-provider.example"
 $env:COMMERCE_LLM_API_KEY = "your-secret"
 $env:COMMERCE_LLM_MODEL = "the-exact-model-id-from-your-workspace"
 $env:COMMERCE_LLM_RESPONSE_MODE = "json_schema"
 $env:COMMERCE_LLM_TIMEOUT_SECONDS = "8"
 ```
 
-Use the exact base URL and model identifier displayed by the provider account you selected; do not guess them from a screenshot. If that endpoint rejects `json_schema`, set `COMMERCE_LLM_RESPONSE_MODE=json_object`. The adapter then still validates the returned action, intent, slots and missing fields locally. Any timeout, malformed JSON, unsupported schema response, or validation failure falls back to the deterministic route; it cannot enable a commerce write.
+Use the exact service address and model identifier displayed by the provider account you selected; do not guess them from a screenshot. The adapter accepts either a service root (and calls `/v1/chat/completions`) or a Base URL already ending in `/v1` (and calls `/chat/completions`), so both common provider conventions work. Set `COMMERCE_LLM_CHAT_PATH` only if the provider documents a nonstandard Chat Completions route. If that endpoint rejects `json_schema`, set `COMMERCE_LLM_RESPONSE_MODE=json_object`. The adapter then still validates the returned action, intent, slots and missing fields locally. Any timeout, malformed JSON, unsupported schema response, or validation failure falls back to the deterministic route; it cannot enable a commerce write.
 
 Keep keys out of Git, the Next.js browser environment, screenshots, Dify exports, chat transcripts, and this document. A public/free API gateway is appropriate only for synthetic development tests after you have reviewed its privacy, retention, rate-limit and availability terms; it is not a production merchant-data path.
 

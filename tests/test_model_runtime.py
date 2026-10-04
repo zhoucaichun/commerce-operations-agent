@@ -57,6 +57,14 @@ class ModelRuntimeTests(unittest.TestCase):
         self.assertFalse(plan.model_used)
         self.assertEqual(model.diagnostics["planner_schema_rejected"], 1)
 
+    def test_endpoint_accepts_service_root_or_v1_base_url(self):
+        with patch.dict("os.environ", {"COMMERCE_LLM_BASE_URL": "http://gateway.example"}, clear=False):
+            self.assertEqual(ModelAdapter().endpoint_url, "http://gateway.example/v1/chat/completions")
+        with patch.dict("os.environ", {"COMMERCE_LLM_BASE_URL": "http://gateway.example/v1"}, clear=False):
+            self.assertEqual(ModelAdapter().endpoint_url, "http://gateway.example/v1/chat/completions")
+        with patch.dict("os.environ", {"COMMERCE_LLM_BASE_URL": "http://gateway.example", "COMMERCE_LLM_CHAT_PATH": "/custom/chat"}, clear=False):
+            self.assertEqual(ModelAdapter().endpoint_url, "http://gateway.example/custom/chat")
+
     def test_memory_requires_explicit_remember_and_can_be_deleted(self):
         agent = CommerceAgent()
         agent.handle(ChatRequest.from_dict({"thread_id": "memory", "message": "remember my device", "slots": {"device": "iPhone 15"}}))

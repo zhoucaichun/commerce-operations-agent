@@ -54,6 +54,7 @@ class ModelAdapter:
         self.base_url = os.getenv("COMMERCE_LLM_BASE_URL", "").rstrip("/")
         self.api_key = os.getenv("COMMERCE_LLM_API_KEY", "")
         self.model = os.getenv("COMMERCE_LLM_MODEL", "")
+        self.chat_path = os.getenv("COMMERCE_LLM_CHAT_PATH", "").strip()
         self.response_mode = os.getenv("COMMERCE_LLM_RESPONSE_MODE", "json_object").strip().lower()
         self.timeout_seconds = float(os.getenv("COMMERCE_LLM_TIMEOUT_SECONDS", "8"))
         self._transport = transport
@@ -66,6 +67,22 @@ class ModelAdapter:
     @property
     def version(self) -> str:
         return f"{self.provider}:{self.model or 'test-model'}" if self.enabled else "disabled"
+
+    @property
+    def endpoint_url(self) -> str:
+        """Build a compatible Chat Completions endpoint without exposing it in reports.
+
+        New API/HPCAPI dashboards provide a service root and advertise
+        ``/v1/chat/completions``.  Some providers instead provide a base URL
+        that already ends in ``/v1``.  Both forms remain supported.
+        """
+        if self.chat_path:
+            path = self.chat_path if self.chat_path.startswith("/") else f"/{self.chat_path}"
+        elif self.base_url.endswith("/v1"):
+            path = "/chat/completions"
+        else:
+            path = "/v1/chat/completions"
+        return f"{self.base_url}{path}"
 
     @property
     def diagnostics(self) -> dict[str, int]:
@@ -104,7 +121,7 @@ class ModelAdapter:
                 return None
             body = json.dumps(payload).encode("utf-8")
             req = urlrequest.Request(
-                f"{self.base_url}/chat/completions", body, method="POST",
+                self.endpoint_url, body, method="POST",
                 headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
             )
             with urlrequest.urlopen(req, timeout=self.timeout_seconds) as response:  # nosec B310: operator-configured endpoint

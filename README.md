@@ -12,6 +12,8 @@ Qwen is the recommended first text-model baseline for this MVP: it can use the e
 
 Live model reports include only aggregate, secret-free `model_diagnostics` (for example `http_401`, `http_404`, `invalid_json`, or local schema rejection). A zero `model_planner_used` result means deterministic fallback, not a model-quality score.
 
+For OpenAI-compatible gateways, the adapter now accepts either a service root (it appends `/v1/chat/completions`) or a Base URL ending in `/v1` (it appends `/chat/completions`). A provider-documented custom route may be supplied only through `COMMERCE_LLM_CHAT_PATH`.
+
 Copy `src/backend/.env.example` to an untracked local environment file and supply only an approved provider configuration when you are ready to evaluate a real model. Do not put a key in Git, the browser, Dify export, or frontend environment variables.
 
 The synthetic evaluation now runs 30 deterministic cases. The web UI includes a read-only synthetic operations summary from `/metrics`, UTC hourly cumulative snapshots, synthetic order/ticket detail cards, and same-request retry for recoverable failures.
