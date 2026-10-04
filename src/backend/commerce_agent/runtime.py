@@ -13,6 +13,7 @@ import json
 import os
 import re
 from typing import Any, Callable
+from urllib import error as urlerror
 from urllib import request as urlrequest
 
 
@@ -56,6 +57,7 @@ class ModelAdapter:
         self.response_mode = os.getenv("COMMERCE_LLM_RESPONSE_MODE", "json_object").strip().lower()
         self.timeout_seconds = float(os.getenv("COMMERCE_LLM_TIMEOUT_SECONDS", "8"))
         self._transport = transport
+        self._diagnostics: dict[str, int] = {"attempted": 0, "succeeded": 0}
 
     @property
     def enabled(self) -> bool:
@@ -65,9 +67,18 @@ class ModelAdapter:
     def version(self) -> str:
         return f"{self.provider}:{self.model or 'test-model'}" if self.enabled else "disabled"
 
+    @property
+    def diagnostics(self) -> dict[str, int]:
+        """Aggregated, secret-free model-adapter outcomes for evaluation only."""
+        return dict(sorted(self._diagnostics.items()))
+
+    def _record(self, category: str) -> None:
+        self._diagnostics[category] = self._diagnostics.get(category, 0) + 1
+
     def complete_json(self, system: str, user: str, schema: dict[str, Any] | None = None) -> dict[str, Any] | None:
         if not self.enabled:
             return None
+        self._record("attempted")
         response_format: dict[str, Any] = {"type": "json_object"}
         # Qwen DashScope's OpenAI-compatible mode and several approved gateways
         # support this shape.  Unsupported endpoints safely fail closed below and
@@ -85,7 +96,12 @@ class ModelAdapter:
         }
         try:
             if self._transport:
-                return self._transport(payload)
+                result = self._transport(payload)
+                if isinstance(result, dict):
+                    self._record("succeeded")
+                    return result
+                self._record("transport_non_object_response")
+                return None
             body = json.dumps(payload).encode("utf-8")
             req = urlrequest.Request(
                 f"{self.base_url}/chat/completions", body, method="POST",
@@ -94,9 +110,33 @@ class ModelAdapter:
             with urlrequest.urlopen(req, timeout=self.timeout_seconds) as response:  # nosec B310: operator-configured endpoint
                 raw = json.loads(response.read().decode("utf-8"))
             content = raw["choices"][0]["message"]["content"]
-            return json.loads(self._strip_fence(content)) if isinstance(content, str) else None
-        except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError):
+            if not isinstance(content, str):
+                self._record("content_not_string")
+                return None
+            parsed = json.loads(self._strip_fence(content))
+            if not isinstance(parsed, dict):
+                self._record("json_not_object")
+                return None
+            self._record("succeeded")
+            return parsed
+        except urlerror.HTTPError as exc:
+            self._record(f"http_{exc.code}")
+        except urlerror.URLError:
+            self._record("network_error")
+        except TimeoutError:
+            self._record("timeout")
+        except json.JSONDecodeError:
+            self._record("invalid_json")
+        except KeyError:
+            self._record("unexpected_response_shape")
+        except (OSError, TypeError, ValueError):
+            self._record("transport_error")
             return None
+        return None
+
+    def record_rejection(self, category: str) -> None:
+        """Record local validation rejection without retaining model text."""
+        self._record(category)
 
     @staticmethod
     def _strip_fence(value: str) -> str:
@@ -118,6 +158,8 @@ class Planner:
             self._plan_schema(),
         )
         validated = self._validate(candidate)
+        if candidate is not None and validated is None:
+            self.model.record_rejection("planner_schema_rejected")
         return validated if validated else self._fallback(message, slots)
 
     def compose(self, answer: str, evidence: list[dict[str, Any]], status: str) -> tuple[str, bool]:
@@ -130,13 +172,17 @@ class Planner:
             self._compose_schema(),
         )
         if not isinstance(candidate, dict) or not isinstance(candidate.get("answer"), str):
+            if candidate is not None:
+                self.model.record_rejection("composer_schema_rejected")
             return answer, False
         rendered = candidate["answer"].strip()
         if not rendered or len(rendered) > 3000 or any(claim in rendered.lower() for claim in PROHIBITED_COMPOSER_CLAIMS):
+            self.model.record_rejection("composer_safety_rejected")
             return answer, False
         known_skus = {str(item.get("sku")) for item in evidence if item.get("sku")}
         mentioned_skus = set(re.findall(r"\b(?:SKU\d{3}|AC-\d+W|CB-[A-Z0-9-]+)\b", rendered.upper()))
         if mentioned_skus - known_skus:
+            self.model.record_rejection("composer_evidence_rejected")
             return answer, False
         return rendered, True
 

@@ -44,6 +44,19 @@ class ModelRuntimeTests(unittest.TestCase):
         self.assertEqual(received[0]["response_format"]["type"], "json_schema")
         self.assertTrue(received[0]["response_format"]["json_schema"]["strict"])
 
+    def test_adapter_reports_only_safe_failure_categories(self):
+        model = ModelAdapter(lambda _: (_ for _ in ()).throw(OSError("do not expose endpoint details")))
+        self.assertIsNone(model.complete_json("system", "user"))
+        self.assertEqual(model.diagnostics["attempted"], 1)
+        self.assertEqual(model.diagnostics["transport_error"], 1)
+        self.assertNotIn("do not expose endpoint details", str(model.diagnostics))
+
+    def test_invalid_model_plan_records_local_schema_rejection(self):
+        model = ModelAdapter(lambda _: {"intent": "product"})
+        plan = Planner(model).plan("show chargers", {})
+        self.assertFalse(plan.model_used)
+        self.assertEqual(model.diagnostics["planner_schema_rejected"], 1)
+
     def test_memory_requires_explicit_remember_and_can_be_deleted(self):
         agent = CommerceAgent()
         agent.handle(ChatRequest.from_dict({"thread_id": "memory", "message": "remember my device", "slots": {"device": "iPhone 15"}}))

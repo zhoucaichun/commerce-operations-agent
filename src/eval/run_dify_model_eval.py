@@ -87,6 +87,7 @@ def build_report(cases: list[dict[str, str]], model: ModelAdapter, live: bool) -
         "datasets": list(DATASETS),
         "total": len(cases),
         "model_version": model.version,
+        "model_diagnostics": getattr(model, "diagnostics", {}),
         "synthetic_data_only": True,
         "merchant_connection": "disabled",
     }
@@ -102,6 +103,7 @@ def build_report(cases: list[dict[str, str]], model: ModelAdapter, live: bool) -
         "route_passed": sum(result["route_passed"] for result in route_scored),
         "route_accuracy": (sum(result["route_passed"] for result in route_scored) / len(route_scored)) if route_scored else None,
         "model_planner_used": sum(result["model_planner_used"] for result in results),
+        "model_diagnostics": getattr(model, "diagnostics", {}),
         "cases": results,
     })
     return report

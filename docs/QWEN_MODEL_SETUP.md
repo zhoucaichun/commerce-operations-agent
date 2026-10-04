@@ -53,6 +53,8 @@ python src/eval/run_dify_model_eval.py --live --report reports/qwen-full-145.jso
 
 The report measures exact Dify intent alignment and only the explicit follow-up/handoff route flags. It deliberately does **not** claim that lexical keypoint comparison proves answer quality. Review recommendation evidence, safety handoffs and representative answer text manually before promoting a model configuration.
 
+If `model_planner_used` is zero, do not treat the intent score as a model-quality score: the deterministic fallback answered every case. Check `model_diagnostics` in the same report. It contains only aggregate categories such as `http_401`, `http_404`, `http_400`, `invalid_json`, `unexpected_response_shape`, or `planner_schema_rejected`; it never writes API keys, URLs, prompt bodies, model responses, or customer data. Use this to correct the provider URL/model ID/output mode before rerunning a 10-case synthetic trial.
+
 ## Production boundary
 
 The Qwen structured-output API supports JSON-object and JSON-schema response modes; use function/tool contracts for model-to-tool decisions and keep local validation as the final authority. The current implementation uses the OpenAI-compatible Chat Completions transport and does not activate Shopify, OIDC, production tenant data or any write operation. See [AGENT_PRODUCTION_IMPLEMENTATION.md](AGENT_PRODUCTION_IMPLEMENTATION.md) and [PRODUCTION_MERCHANT_DATA.md](PRODUCTION_MERCHANT_DATA.md).

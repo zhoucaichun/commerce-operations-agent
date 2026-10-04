@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added secret-free aggregate LLM adapter diagnostics to live model evaluation reports, distinguishing provider HTTP/network/JSON/response-shape failures from local schema rejection without retaining keys, URLs, prompts, or responses.
+
 - Added a Qwen-labelled OpenAI-compatible model configuration path, optional JSON Schema request mode, and local schema/authority validation fallback.
 - Added an explicit `--live` Dify model-evaluation runner for all 145 migrated synthetic cases; its default dry run makes no provider call and reports only dataset/model scope.
 - Added Qwen model-selection, secret-handling, and staged synthetic-evaluation guidance; no real merchant, order, media, or Shopify data is sent to a model.
