@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import re
 from typing import Any, Callable
 
+from .rag import HybridRetriever, build_knowledge_documents
 from .store import InMemoryStore
 
 
@@ -25,11 +26,13 @@ class ToolDefinition:
 class ToolRegistry:
     def __init__(self, store: InMemoryStore) -> None:
         self.store = store
+        self.retriever = HybridRetriever(build_knowledge_documents(store.products, store.policies))
         self._tools = {
             "product_search": ToolDefinition("product_search", "Search the synthetic product catalogue.", True, False, self._product_search),
             "recommend_products": ToolDefinition("recommend_products", "Rank synthetic catalogue products using deterministic constraints.", True, False, self._recommend_products),
             "compatibility_check": ToolDefinition("compatibility_check", "Evaluate a deterministic compatibility rule.", True, False, self._compatibility_check),
             "policy_search": ToolDefinition("policy_search", "Find synthetic policy records by topic and region.", True, False, self._policy_search),
+            "knowledge_search": ToolDefinition("knowledge_search", "Retrieve cited synthetic product and FAQ knowledge using hybrid RAG.", True, False, self._knowledge_search),
             "order_shipment_lookup": ToolDefinition("order_shipment_lookup", "Look up a verified synthetic order.", True, False, self._order_shipment_lookup),
             "create_simulated_ticket": ToolDefinition("create_simulated_ticket", "Create a local simulated support ticket.", False, True, self._create_simulated_ticket),
         }
@@ -127,8 +130,23 @@ class ToolRegistry:
     def _policy_search(self, arguments: dict[str, Any]) -> dict[str, Any]:
         topic, region = str(arguments.get("topic", "")).strip().lower(), str(arguments.get("region", "CN")).strip().upper()
         if not topic: raise ToolError("topic is required")
-        matches = [policy for policy in self.store.policies if policy.get("region") == region and (topic == policy.get("topic") or topic == policy.get("policy_type") or topic in str(policy.get("topic", "")) or topic in str(policy.get("policy_type", "")))]
-        return {"topic": topic, "region": region, "policies": matches, "data_source": "synthetic_policy_seed"}
+        query = str(arguments.get("query", "")).strip()
+        synonyms = {"return": "return refund exchange 退货 退款", "warranty": "warranty guarantee 保修", "shipping": "shipping delivery logistics 配送 物流", "promotion": "promotion coupon discount 优惠"}
+        retrieval = self.retriever.search(f"{query} {synonyms.get(topic, topic)}", filters={"kind": "policy", "topic": topic, "region": region})
+        policies = []
+        for item in retrieval["chunks"]:
+            metadata = item["citation"]["metadata"]
+            policies.append({"policy_id": metadata["policy_id"], "topic": metadata["topic"], "region": metadata["region"], "effective_from": metadata["effective_from"], "summary": metadata["answer_text"], "source": item["citation"]["source"], "citation": item["citation"]})
+        return {"topic": topic, "region": region, "policies": policies, "citations": [item["citation"] for item in retrieval["chunks"]], "retrieval": retrieval, "data_source": "hybrid_rag_synthetic_policy_kb"}
+
+    def _knowledge_search(self, arguments: dict[str, Any]) -> dict[str, Any]:
+        query = str(arguments.get("query", "")).strip()
+        if not query:
+            raise ToolError("query is required")
+        kind = str(arguments.get("kind", "")).strip().lower() or None
+        region = str(arguments.get("region", "")).strip().upper() or None
+        retrieval = self.retriever.search(query, filters={key: value for key, value in {"kind": kind, "region": region}.items() if value})
+        return {"query": query, "chunks": retrieval["chunks"], "citations": [item["citation"] for item in retrieval["chunks"]], "retrieval": retrieval, "data_source": "hybrid_rag_synthetic_merchant_kb"}
 
     def _order_shipment_lookup(self, arguments: dict[str, Any]) -> dict[str, Any]:
         order_id, identity_suffix = str(arguments.get("order_id", "")).strip().upper(), str(arguments.get("identity_suffix", "")).strip()

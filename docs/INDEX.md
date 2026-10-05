@@ -45,6 +45,7 @@ docs/
 | 文件 | 说明 | 状态 |
 |---|---|---|
 | `AGENT_RUNTIME_SPEC.md` | Model、Planner、Tool、Memory、Harness 的权威运行时契约。 | MVP 与生产目标均明确标注。 |
+| `RAG_IMPLEMENTATION.md` | 本地混合 RAG、引用、数据边界与后续评测顺序。 | 当前可用；仅合成数据与本地 Hashing Embedding。 |
 | `AGENT_PRODUCTION_IMPLEMENTATION.md` | 模型适配器、受控生成与生产激活前置条件。 | 模型连接可选；真实生产未激活。 |
 | `DIFY_WORKFLOW_SPEC.md` | Dify 的提示词/节点/badcase 如何迁入 Agent。 | Dify 仅作参考和评测来源。 |
 | `MULTIMODAL_MVP.md` | 图片/语音合成元数据 MVP 与安全边界。 | 不上传媒体、不调用视觉/语音模型。 |

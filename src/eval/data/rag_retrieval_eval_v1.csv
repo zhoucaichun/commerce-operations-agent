@@ -1,0 +1,12 @@
+case_id,query,topic,region,target_document_id,expected_empty
+RAG-SHIP-US-STD,How long does standard shipping take to the US?,shipping,US,policy:POL001,N
+RAG-SHIP-US-EXP,How long does express delivery take to the US?,shipping,US,policy:POL002,N
+RAG-SHIP-CA,How long does standard shipping take to Canada?,shipping,CA,policy:POL003,N
+RAG-SHIP-US-FREE,Do you offer free shipping in the US?,shipping,US,policy:POL007,N
+RAG-RETURN-WINDOW,What is the return policy and time window?,returns,US,policy:POL013,N
+RAG-RETURN-FEE,Who pays for return shipping when there is a defect?,returns,US,policy:POL016,N
+RAG-WARRANTY-CHARGER,Do chargers have a warranty?,warranty,US,policy:POL019,N
+RAG-WARRANTY-CLAIM,How do I claim warranty service?,warranty,US,policy:POL022,N
+RAG-PROMO-BUNDLE,Is there a charger and cable bundle discount?,promo,US,policy:POL026,N
+RAG-AFTER-SALES-DAMAGE,What should I do if an item arrives damaged?,after_sales,US,policy:POL027,N
+RAG-NO-EVIDENCE,What is the battery recycling policy?,battery_recycling,BR,,Y

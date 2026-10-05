@@ -8,6 +8,7 @@ from threading import RLock
 from typing import Any
 
 from .catalog_loader import load_dify_policies, load_dify_products, load_public_reference_products
+from .synthetic_catalog import load_synthetic_merchant_products
 
 
 class InMemoryStore:
@@ -53,6 +54,7 @@ class InMemoryStore:
         ]
         self.products.extend(load_dify_products())
         self.products.extend(load_public_reference_products())
+        self.products.extend(load_synthetic_merchant_products())
         self.policies = [
             {
                 "policy_id": "return-cn-2026-01",

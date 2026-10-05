@@ -265,7 +265,7 @@ class CommerceAgent:
             topic = "return"
         region = request.slots.get("region") or request.slots.get("country") or ("US" if any(word in text for word in ("us", "united states")) else "CN")
         result = self._call_tool(
-            "policy_search", {"topic": topic, "region": region}, request, request_id, trace, summaries
+            "policy_search", {"topic": topic, "region": region, "query": request.message}, request, request_id, trace, summaries
         )
         if not result["policies"]:
             return AgentResponse(
@@ -278,9 +278,10 @@ class CommerceAgent:
                 ),
             )
         policy = result["policies"][0]
+        citation = policy.get("citation", {})
         return AgentResponse(
             status="completed",
-            answer=f"{policy['summary']}（适用地区：{policy['region']}；生效日：{policy['effective_from']}；来源：{policy['source']}）",
+            answer=f"{policy['summary']}（适用地区：{policy['region']}；生效版本：{policy['effective_from']}；证据：{citation.get('document_id', policy['policy_id'])}/{citation.get('chunk_id', 'n/a')}；来源：{policy['source']}）",
             request_id=request_id,
             thread_id=request.thread_id,
         )
@@ -326,9 +327,12 @@ class CommerceAgent:
             f"{item['sku']}（{item['name']}，{item['power_w']}W，库存状态：{item['stock']}）"
             for item in result["products"]
         )
+        knowledge = self._call_tool("knowledge_search", {"query": request.message, "kind": "product"}, request, request_id, trace, summaries)
+        citations = knowledge.get("citations", [])[:2]
+        citation_note = "；".join(f"{item['document_id']}/{item['chunk_id']}@{item['version']}" for item in citations) or "未检索到补充知识片段"
         return AgentResponse(
             status="completed",
-            answer=f"模拟商品目录匹配结果：{products}。库存仅为演示数据，不会扣减。",
+            answer=f"模拟商品目录匹配结果：{products}。补充检索证据：{citation_note}。库存仅为演示数据，不会扣减。",
             request_id=request_id,
             thread_id=request.thread_id,
         )
@@ -374,10 +378,14 @@ class CommerceAgent:
         elapsed_ms = round((time.perf_counter() - started) * 1000, 2)
         self._trace(trace, request_id, request.thread_id, "validate_tool_result", "ok", elapsed_ms=elapsed_ms)
         summaries.append({"tool": name, "ok": True, "result_keys": sorted(result.keys())})
+        if result.get("citations"):
+            citations = result["citations"][:4]
+            summaries[-1]["citations"] = citations
+            self._trace(trace, request_id, request.thread_id, "retrieval_evidence", "ok", evidence_count=len(citations))
         return result
 
     @staticmethod
-    def _trace(trace, request_id, thread_id, node, outcome, error_code=None, elapsed_ms=0.0):
+    def _trace(trace, request_id, thread_id, node, outcome, error_code=None, elapsed_ms=0.0, evidence_count=0):
         trace.append(
             {
                 "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -388,6 +396,7 @@ class CommerceAgent:
                 "prompt_version": PROMPT_VERSION,
                 "elapsed_ms": elapsed_ms,
                 "error_code": error_code,
+                "evidence_count": evidence_count,
             }
         )
 

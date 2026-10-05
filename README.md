@@ -85,7 +85,7 @@ Invoke-RestMethod http://127.0.0.1:8000/api/v1/chat -Method Post -ContentType "a
 
 ## 已知未完成项
 
-- 当前未接入 LLM Provider、pgvector/RAG、真实 Shopify/ERP/OMS/WMS/CRM 数据连接器、真实 OIDC 身份提供方或生产级 PostgreSQL 行级租户隔离。
+- 当前未接入真实 Shopify/ERP/OMS/WMS/CRM 数据连接器、真实 OIDC 身份提供方或生产级 PostgreSQL 行级租户隔离。仓库已包含可复现的本地混合 RAG（合成知识文档、切分、Hashing Embedding、BM25、元数据过滤、重排、引用和 Trace），但它不是生产级语义 Embedding/pgvector 部署，详见 [RAG 实现说明](docs/runtime/RAG_IMPLEMENTATION.md)。
 - 当前商品、政策、订单、会话、工单和指标均为演示数据或演示状态；PostgreSQL/Redis/Compose、FastAPI、Next.js、LangGraph 状态机、CI 与确定性评测已经存在，但不等于生产激活。
 - 当前评测覆盖确定性工具、安全链路和冒烟场景；模型质量、完整 badcase 回归集、人工标注与正式发布阈值尚待完成。
 - 当前运行时/工作流/评测文档见 `docs/runtime/AGENT_RUNTIME_SPEC.md`、`docs/runtime/DIFY_WORKFLOW_SPEC.md`、`docs/agent评测/评测规范.md`：它们明确区分现有 MVP 与生产目标。

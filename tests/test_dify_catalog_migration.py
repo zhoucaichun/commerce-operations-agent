@@ -20,7 +20,7 @@ class DifyCatalogMigrationTests(unittest.TestCase):
         return self.agent.handle(ChatRequest.from_dict({"thread_id": f"migration-{len(message)}", "message": message, "slots": slots}))
 
     def test_packaged_source_has_expected_synthetic_records(self):
-        self.assertEqual(len(self.store.products), 62)
+        self.assertGreaterEqual(len(self.store.products), 270)
         self.assertEqual(len(self.store.policies), 37)
         self.assertTrue(any(product["sku"] == "SKU005" for product in self.store.products))
         self.assertTrue(any(policy["source"] == "dify_synthetic_policy_migration" for policy in self.store.policies))
