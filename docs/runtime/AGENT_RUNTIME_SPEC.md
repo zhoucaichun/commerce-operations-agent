@@ -2,7 +2,7 @@
 
 ## Status and purpose
 
-This is the canonical contract for the ShopPilot Commerce Agent runtime. It defines the production target and makes the current MVP boundary explicit. It complements the outcome requirements in [PRD.md](../PRD.md), the implementation view in [技术架构.md](../技术架构.md), the reviewed Dify reference in [DIFY_WORKFLOW_SPEC.md](DIFY_WORKFLOW_SPEC.md), and measurable release gates in [EVALUATION_SPEC.md](../agent评测/EVALUATION_SPEC.md).
+This is the canonical contract for the ShopPilot Commerce Agent runtime. It defines the production target and makes the current MVP boundary explicit. It complements the outcome requirements in [PRD.md](../PRD.md), the implementation view in [技术架构.md](../技术架构.md), the reviewed Dify reference in [DIFY_WORKFLOW_SPEC.md](DIFY_WORKFLOW_SPEC.md), and measurable release gates in [评测规范.md](../agent评测/评测规范.md).
 
 **Current MVP:** FastAPI invokes a LangGraph state-machine shell around deterministic, controlled catalogue, compatibility, policy, order, and simulated-ticket tools. No LLM provider is connected. The graph's current `planner` is keyword/rule based, not an LLM planner. All data is synthetic or labelled public-reference demonstration data.
 
@@ -76,4 +76,4 @@ Every operation records request/thread/tenant identifiers, action and tool names
 2. PostgreSQL row-level tenant isolation, encrypted secrets, rate limits, idempotency locks, tool timeouts, retries, circuit breakers, and alerting.
 3. Prompt-injection defenses for text/OCR, attachment scanning and consent controls, and no unrestricted browser/model tool access.
 4. Approval gates for any new write capability; refunds, cancellations, inventory changes, and address changes remain disabled unless separately designed and approved.
-5. Evaluation gates defined in [EVALUATION_SPEC.md](../agent评测/EVALUATION_SPEC.md), red-team tests, security review, sandbox connector verification, and rollback drills.
+5. Evaluation gates defined in [评测规范.md](../agent评测/评测规范.md), red-team tests, security review, sandbox connector verification, and rollback drills.

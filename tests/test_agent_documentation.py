@@ -23,11 +23,11 @@ class AgentDocumentationTests(unittest.TestCase):
         for document in (
             "AGENT_RUNTIME_SPEC.md",
             "DIFY_WORKFLOW_SPEC.md",
-            "EVALUATION_SPEC.md",
+            "评测规范.md",
         ):
             self.assertIn(document, prd)
 
     def test_evaluation_spec_blocks_unsupported_facts(self):
-        text = (DOCS / "agent评测" / "EVALUATION_SPEC.md").read_text(encoding="utf-8")
-        self.assertIn("forbidden-claim rate", text)
-        self.assertIn("release blocker", text)
+        text = (DOCS / "agent评测" / "评测规范.md").read_text(encoding="utf-8")
+        self.assertIn("禁止主张率", text)
+        self.assertIn("直接阻断发布", text)

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Translated and renamed the Agent evaluation runtime contract to `docs/agent评测/评测规范.md`; assessment fields remain stable English identifiers while requirements and release gates are Chinese.
 - Reorganized project documentation by product, runtime, integration/data, Agent evaluation, and operations; added `docs/INDEX.md` with a status-aware reading path and updated repository links, documentation tests, and production-document validation paths.
 
 - Added `docs/agent评测/`: a versioned enterprise Agent-evaluation playbook, ShopPilot 3C customer-service/recommendation metric system, and a critical review of recent benchmark research and evaluation frameworks. The documentation explicitly separates deterministic evidence, LLM judging, human calibration, synthetic MVP results, and future real-merchant production metrics.

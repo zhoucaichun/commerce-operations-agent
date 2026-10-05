@@ -12,7 +12,7 @@
 
 | 文档 | 作用 |
 |---|---|
-| [EVALUATION_SPEC.md](EVALUATION_SPEC.md) | 当前运行时的最小验收契约与安全门槛。 |
+| [评测规范.md](评测规范.md) | 当前运行时的最小验收契约与安全门槛。 |
 | [../runtime/AGENT_RUNTIME_SPEC.md](../runtime/AGENT_RUNTIME_SPEC.md) | Agent 节点、状态、工具和 Harness 的运行时契约。 |
 | [../PRD.md](../PRD.md) | 产品应达到的用户结果和安全边界。 |
 | [../技术架构.md](../技术架构.md) | Trace、数据、部署和后续 RAG/可观测性架构。 |

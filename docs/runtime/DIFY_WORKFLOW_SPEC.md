@@ -42,7 +42,7 @@ This keeps PRD requirements stable while allowing prompts, few-shot examples, an
 1. Extract the branch intent, slots, prompt constraints, and JSON/output contract from the DSL.
 2. Translate it into the typed planner/tool contract in [AGENT_RUNTIME_SPEC.md](AGENT_RUNTIME_SPEC.md); do not paste unreviewed prompt text directly into production.
 3. Preserve business-critical instructions as executable rules, schemas, evidence requirements, or handoff gates whenever possible.
-4. Convert each evaluated Dify badcase into a case in [EVALUATION_SPEC.md](../agent评测/EVALUATION_SPEC.md), including a golden action/evidence expectation and forbidden outcomes.
+4. Convert each evaluated Dify badcase into a case in [评测规范.md](../agent评测/评测规范.md), including a golden action/evidence expectation and forbidden outcomes.
 5. Run deterministic tools first; only then introduce a replaceable model adapter behind structured output validation and release gates.
 
 ## Explicit non-goals

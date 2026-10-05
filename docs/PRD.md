@@ -19,7 +19,7 @@ Every supported chain must have the following product-level acceptance criteria:
 | After-sales | Safe explanation and structured human-support request when appropriate | Verified order/policy evidence and risk classification | Refund, cancellation, address, inventory, payout, exception, or safety request |
 | Multimodal | Safe text/voice/photo-assisted clarification or answer | Validated metadata plus controlled-tool evidence | Low confidence, unsafe electrical/battery signal, identity/ownership claim |
 
-The runtime implementation of Model, Planner, Tool use, Memory, and Harness is specified in [AGENT_RUNTIME_SPEC.md](runtime/AGENT_RUNTIME_SPEC.md). Dify-derived workflow details are governed by [DIFY_WORKFLOW_SPEC.md](runtime/DIFY_WORKFLOW_SPEC.md); regression and release evidence is governed by [EVALUATION_SPEC.md](agent评测/EVALUATION_SPEC.md). These documents are part of the MVP-to-production acceptance baseline.
+The runtime implementation of Model, Planner, Tool use, Memory, and Harness is specified in [AGENT_RUNTIME_SPEC.md](runtime/AGENT_RUNTIME_SPEC.md). Dify-derived workflow details are governed by [DIFY_WORKFLOW_SPEC.md](runtime/DIFY_WORKFLOW_SPEC.md); regression and release evidence is governed by [评测规范.md](agent评测/评测规范.md). These documents are part of the MVP-to-production acceptance baseline.
 
 ## 2026-09 MVP 运行时决策补充
 
