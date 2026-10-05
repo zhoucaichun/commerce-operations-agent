@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- 新增本地可审计混合 RAG：合成知识文档、切分、Hashing Embedding、BM25、元数据过滤、融合重排、引用与 Trace；新增 11 条检索专项集和离线运行脚本。该实现不代表生产级语义 Embedding 或 pgvector 部署。
+
 - Translated and renamed the Agent evaluation runtime contract to `docs/agent评测/评测规范.md`; assessment fields remain stable English identifiers while requirements and release gates are Chinese.
 - Reorganized project documentation by product, runtime, integration/data, Agent evaluation, and operations; added `docs/INDEX.md` with a status-aware reading path and updated repository links, documentation tests, and production-document validation paths.
 
@@ -31,7 +33,7 @@
 - Added a dated, source-labelled public product-reference catalogue for realistic demonstration facts. It is not a live merchant connection, inventory feed, or price promise.
 - Improved non-vehicle iPhone charging-bundle ranking to avoid car chargers and added regression coverage.
 
-## Unreleased
+## 2026-09-30：店铺、Dify 迁移与多租户演示
 
 - Added structured recommendation evidence to Agent responses so the web can show SKU, category, price, and migrated synthetic-catalogue provenance.
 - Documented the non-implemented production merchant-data path: tenant-scoped PostgreSQL, Shopify OAuth/read-only projection, and approval gates.
@@ -48,7 +50,7 @@
 - Added a synthetic two-merchant B2B demonstration: consumer Widget, Merchant Console, merchant-scoped Agent state and simulated ticket handling.
 - Added B2B product, architecture and delivery-plan documentation, including explicit production boundaries.
 
-## Unreleased
+## 2026-09-28：MVP 平台基础与历史演进
 
 ### Evaluation and observability
 
@@ -83,6 +85,8 @@
 - Added automated Nginx template validation, a certificate rotation/rollback runbook, and an approval-gated OIDC rollout decision record.
 - Added CI checks for Nginx template validation and production-document safety guidance.
 - Added an explicit external security-approval checklist that blocks OIDC sandbox activation until signed outside the repository.
+
+### 初始纵向切片（历史，不代表当前状态）
 
 ### Added
 

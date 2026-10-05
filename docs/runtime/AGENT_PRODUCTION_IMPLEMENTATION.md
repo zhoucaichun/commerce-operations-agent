@@ -1,4 +1,4 @@
-# Agent Completion and Production Activation Plan
+# Agent 完成度与生产激活计划
 
 This document is the implementation record for the ten Agent capabilities. It distinguishes code available in this repository from activation that requires an external merchant, model provider, or identity-provider authorization.
 
@@ -9,7 +9,7 @@ This document is the implementation record for the ten Agent capabilities. It di
 | 3. Dify migration | Four Dify branch families mapped to typed intents, slots, controlled tools, and regression records | Review/port any later Dify prompt change through versioned tests |
 | 4. Tool harness | Allow-list, typed plan validation, tool-result validation, read-only retry, idempotent simulated ticket, risk handoff | No commerce write is enabled; any new write requires security/product approval |
 | 5. Memory | Thread-scoped summaries/slots, bounded compaction, explicit preference writing, user memory-delete command | Tenant-scoped durable memory, retention/deletion jobs, and consent review for production |
-| 6. Retrieval/recommendation | Catalogue/policy lexical retrieval, metadata filters, source labels, compatibility rules, bundle selection of complementary charger+cable components | pgvector/hybrid retrieval and merchant catalogue projection after approved data connection |
+| 6. 检索/推荐 | 目录确定性筛选；政策/FAQ/商品说明的 Hashing + BM25 混合 RAG、元数据过滤、重排、来源引用；兼容性规则与互补套装选择 | 获批数据接入后替换为生产 Embedding + pgvector（或获批向量库）及商家目录投影 |
 | 7. Multimodal | Bounded metadata adapter, safety/confidence gate, battery-risk handoff, no byte retention | Approved STT/vision provider, encrypted object store, scanning, EXIF stripping, consent/retention controls |
 | 8. Human handoff | Reason code, structured summary, priority, SLA target, simulated lifecycle and idempotent ticket creation | Approved helpdesk integration and staff workflow/SLA ownership |
 | 9. Evaluation | Unit/API/graph/model-safety tests, deterministic smoke/eval, Dify source datasets, regression contract | Human labels, held-out model suite, red-team results, score thresholds and release sign-off |

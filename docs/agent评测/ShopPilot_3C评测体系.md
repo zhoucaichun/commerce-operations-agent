@@ -84,7 +84,7 @@ expected:
   allowed_intents: [recommendation]
   clarification_required: false
   required_slots: [device_model, budget, scenario]
-  allowed_tools: [search_products, check_compatibility]
+  allowed_tools: [recommend_products, compatibility_check]
   allowed_skus: [SKU004, SKU005, SKU016]
   required_evidence_fields: [connector, price, compatibility]
   recommendation_shape: complementary_bundle
@@ -103,7 +103,7 @@ Case 的“预期答案”应允许合理的多解；真正固定的是约束、
 | 现有资产 | 保留价值 | 需要补齐 |
 |---|---|---|
 | 145 条 Dify 历史题 | 真实迭代过的高频问法与 badcase 种子 | 统一链路标签、允许工具、证据、终态和风险等级。 |
-| 110 条确定性评测 | Harness、规则、授权和 API 回归 | 输出转换为统一报告格式。 |
+| 仓库确定性测试与评测脚本 | Harness、规则、授权和 API 回归 | 以每次 CI/本地运行报告为准，并输出统一报告格式。 |
 | Live Model Eval | 对比 Qwen/其他模型的实际运行入口 | 增加 Trace、版本、失败分类与 Grader 结果。 |
 | 商品/政策 CSV | 合成目录事实来源 | 固化为可回放的 `environment_snapshot_id`。 |
 | Web Widget/Console | 体验与运营展示 | 增加推荐曝光、详情点击、模拟加购和反馈事件。 |
@@ -123,12 +123,10 @@ Case 的“预期答案”应允许合理的多解；真正固定的是约束、
 
 ## 7. 当前至生产的里程碑
 
-### M1：评测可复现（下一步）
+### M1：评测可复现基础（部分完成，当前优先级）
 
-- 新 Case Schema、数据版本和报告目录；
-- Planner/工具/证据/安全的确定性 Grader；
-- 145 条历史题的人工审核与分层；
-- 每次运行保存无密钥的 Trace 摘要和提交版本。
+- 已有：145 条 Dify 历史题、确定性回归/冒烟脚本、RAG V1 检索金标集及其报告输出。
+- 待补：新 Case Schema、数据版本和报告目录；Planner/工具/证据/安全的统一确定性 Grader；145 条历史题的人工审核与分层；每次运行保存无密钥的 Trace 摘要和提交版本。
 
 ### M2：模型与 Graph 迭代
 

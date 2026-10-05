@@ -16,7 +16,7 @@ class AgentDocumentationTests(unittest.TestCase):
         text = (DOCS / "runtime" / "AGENT_RUNTIME_SPEC.md").read_text(encoding="utf-8")
         for component in ("Model", "Planner", "Tool use", "Memory", "Harness"):
             self.assertIn(component, text)
-        self.assertIn("No LLM provider is connected", text)
+        self.assertIn("模型适配器默认未配置", text)
 
     def test_dify_and_evaluation_specs_are_linked_from_prd(self):
         prd = (DOCS / "PRD.md").read_text(encoding="utf-8")
