@@ -4,9 +4,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 REQUIRED = {
     "docs/operations/PRODUCTION.md": ("nginx -t", "certificate rotation", "Do not copy private keys"),
-    "docs/operations/IDENTITY_PROVIDER_DESIGN.md": ("Approval-gated rollout", "not implemented", "No stage above is implemented"),
+    "docs/operations/IDENTITY_PROVIDER_DESIGN.md": ("需审批的发布路径", "未实现", "上述阶段均未由本仓库实现"),
     "README.md": ("validate_proxy_config.py", "IDENTITY_PROVIDER_DESIGN.md"),
-    "docs/operations/SECURITY_APPROVAL_CHECKLIST.md": ("Status: **not approved**", "do not add any OIDC provider configuration"),
+    "docs/operations/SECURITY_APPROVAL_CHECKLIST.md": ("状态：**未批准**", "不得添加任何 OIDC 提供方配置"),
 }
 
 

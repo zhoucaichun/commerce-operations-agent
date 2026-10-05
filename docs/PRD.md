@@ -1,25 +1,25 @@
-# Commerce Operations Agent
+# Commerce 运营智能体
 
-## Multimodal customer-service MVP (2026-09)
+## 多模态客服 MVP（2026-09）
 
-Store chat accepts image and voice demo metadata. A synthetic adapter may propose device/SKU candidates, but final compatibility, policy, order, and after-sales decisions remain controlled-tool decisions. Attachment bytes are not uploaded or retained. Safety signals such as a damaged battery must always hand off to a human.
+店铺对话支持图片和语音演示元数据。合成适配器可以提出设备/SKU 候选，但兼容性、政策、订单和售后结论仍必须由受控工具作出。附件字节不会上传或留存；例如电池破损等安全信号必须转人工。
 
-## Agent runtime and quality requirements (normative supplement)
+## Agent 运行时与质量要求（规范性补充）
 
-This PRD states **what outcome the product must provide**, not the exact wording of every Dify prompt. Prompt text, slot extraction examples, workflow-node details, model choice, and badcase fixtures are maintained separately so that they can improve without silently changing product or safety requirements.
+本 PRD 规定的是**产品必须交付的结果**，而不是每个 Dify 提示词的具体措辞。提示词、槽位提取示例、工作流节点细节、模型选型和 badcase Fixture 独立维护，以便迭代时不悄然改变产品或安全要求。
 
-Every supported chain must have the following product-level acceptance criteria:
+每条受支持链路均须满足下列产品级验收标准：
 
-| Chain | Required user outcome | Required factual basis | Escalation condition |
+| 链路 | 必须交付的用户结果 | 必须具备的事实依据 | 转人工条件 |
 |---|---|---|---|
-| Recommendation | Relevant, complementary candidates or one focused clarification | Merchant-scoped catalogue attributes and source/timestamp | Missing constraints, incompatible candidates, unavailable/uncertain facts |
-| Compatibility | Clear compatible/incompatible/unknown answer with limitations | Versioned compatibility rule and declared device/product fields | Missing facts, ambiguous adapter/power conditions, safety risk |
-| Policy | Applicable policy scope and effective evidence | Region/topic/effective-date policy record | Exception, expired/missing policy, request to execute an outcome |
-| Order/logistics | Minimal verified order/shipment answer | Tenant-scoped order data after required ownership check | Failed ownership, data mismatch, carrier/system failure |
-| After-sales | Safe explanation and structured human-support request when appropriate | Verified order/policy evidence and risk classification | Refund, cancellation, address, inventory, payout, exception, or safety request |
-| Multimodal | Safe text/voice/photo-assisted clarification or answer | Validated metadata plus controlled-tool evidence | Low confidence, unsafe electrical/battery signal, identity/ownership claim |
+| 推荐 | 相关且互补的候选，或一个聚焦澄清问题 | 商家范围内的目录属性、来源和时间戳 | 约束缺失、候选不兼容、事实不可用或不确定 |
+| 兼容性 | 清楚的兼容/不兼容/未知结论及限制 | 版本化兼容规则和已声明的设备/商品字段 | 事实缺失、转接头/功率条件不明确、安全风险 |
+| 政策 | 适用范围与有效证据 | 地区/主题/生效日期政策记录 | 例外、政策过期/缺失、要求执行结果 |
+| 订单/物流 | 经最小必要验证的订单/包裹答复 | 完成归属校验后的租户范围订单数据 | 归属校验失败、数据不一致、承运商/系统故障 |
+| 售后 | 安全说明；必要时提交结构化人工支持请求 | 已核验的订单/政策证据与风险分类 | 退款、取消、地址、库存、付款、例外或安全请求 |
+| 多模态 | 安全的文本/语音/图片辅助澄清或答复 | 已验证元数据和受控工具证据 | 低置信度、不安全电气/电池信号、身份/归属主张 |
 
-The runtime implementation of Model, Planner, Tool use, Memory, and Harness is specified in [AGENT_RUNTIME_SPEC.md](runtime/AGENT_RUNTIME_SPEC.md). Dify-derived workflow details are governed by [DIFY_WORKFLOW_SPEC.md](runtime/DIFY_WORKFLOW_SPEC.md); regression and release evidence is governed by [评测规范.md](agent评测/评测规范.md). These documents are part of the MVP-to-production acceptance baseline.
+模型、规划器、工具调用、记忆与执行护栏的运行时实现见 [AGENT_RUNTIME_SPEC.md](runtime/AGENT_RUNTIME_SPEC.md)。Dify 派生工作流细节见 [DIFY_WORKFLOW_SPEC.md](runtime/DIFY_WORKFLOW_SPEC.md)，回归与发布证据见 [评测规范.md](agent评测/评测规范.md)；三者共同构成从 MVP 走向生产的验收基线。
 
 ## 2026-09 MVP 运行时决策补充
 

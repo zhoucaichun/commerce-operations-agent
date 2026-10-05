@@ -1,14 +1,14 @@
-# OIDC sandbox security approval checklist
+# OIDC 沙箱安全审批清单
 
-Status: **not approved**. This document is an evidence checklist, not an approval record.
+状态：**未批准**。本文是证据清单，不是批准记录。
 
-Before any OIDC sandbox configuration is enabled, the designated security owner must review and sign off on all items below outside this repository:
+在启用任何 OIDC 沙箱配置前，指定安全负责人必须在本仓库外审阅并签署下列事项：
 
-- Approved OIDC issuer, audience, redirect URIs, PKCE requirement, scopes and nonce/state validation.
-- Synthetic-only sandbox tenant, users and test data; no production tenant, merchant data or merchant tool credentials.
-- Server-side group-to-role mapping, tenant isolation and negative authorization tests.
-- Secret-manager location, rotation owner, access logs and incident/revocation contacts.
-- Threat model, audit fields/retention, feature-flag rollback plan and successful rollback exercise.
-- Explicit confirmation that no refund, cancellation, inventory, address or other merchant mutation is enabled.
+- 已批准的 OIDC 发行方、受众、回调 URI、PKCE 要求、范围及 nonce/state 校验；
+- 仅合成数据的沙箱租户、用户与测试数据；不得使用生产租户、商家数据或商家工具凭据；
+- 服务端群组到角色映射、租户隔离和负向授权测试；
+- 密钥管理器位置、轮换责任人、访问日志和事故/撤销联系人；
+- 威胁模型、审计字段/留存、功能开关回滚方案及成功回滚演练；
+- 明确确认未启用退款、取消、库存、地址或其他商家写操作。
 
-Evidence to attach to the external approval ticket: CI reports, `docs/operations/PRODUCTION.md` validation results, OIDC negative-test plan and named rollback owner. Until written approval is recorded by the security owner, keep `COMMERCE_AUTH_REQUIRED` in its current synthetic-only mode and do not add any OIDC provider configuration.
+外部审批工单需附：CI 报告、`docs/operations/PRODUCTION.md` 校验结果、OIDC 负向测试计划及具名回滚责任人。在安全负责人记录书面批准前，`COMMERCE_AUTH_REQUIRED` 必须保持当前仅合成模式，且不得添加任何 OIDC 提供方配置。

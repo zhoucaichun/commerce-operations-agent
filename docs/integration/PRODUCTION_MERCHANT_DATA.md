@@ -1,17 +1,17 @@
-# Production merchant data integration
+# 生产商家数据接入
 
-## Current status
+## 当前状态
 
-Not implemented. The current PostgreSQL/SQLite stores and catalogue are synthetic demonstration data only. Dify remains a workflow and evaluation reference, not a database or production connector.
+尚未实现。当前 PostgreSQL/SQLite 存储与目录都仅含合成演示数据。Dify 仍是工作流和评测参考，不是数据库或生产连接器。
 
-## Required production design
+## 生产环境必须具备的设计
 
-1. Each merchant receives an organization and `tenant_id`; all product, policy, order, ticket, attachment and audit records use tenant-scoped PostgreSQL tables with row-level security.
-2. Shopify is the first connector: OAuth installation, encrypted per-merchant tokens in a secret manager, webhook signature verification, idempotent event ingestion, and a read-only catalogue/order projection.
-3. Agent tools query the local tenant projection rather than arbitrary merchant databases. Inventory, refund, cancellation and address mutation remain disabled until separately approved.
-4. A merchant administrator configures field mappings, sync scope, retention, roles and consent. Support staff never receive raw database credentials.
-5. Before activation: contract/DPA, security review, sandbox verification, least-privilege scopes, audit logs, deletion/export procedures, backup recovery drill, alerting, and rollback.
+1. 每个商家拥有组织与 `tenant_id`；商品、政策、订单、工单、附件与审计记录均使用带行级安全的租户范围 PostgreSQL 表。
+2. 首个连接器为 Shopify：OAuth 安装、密钥管理器中的加密商家令牌、Webhook 签名校验、幂等事件摄取，以及只读商品/订单投影。
+3. Agent 工具只查询本地租户投影，不直连任意商家数据库；库存、退款、取消与地址修改在单独审批前保持禁用。
+4. 商家管理员配置字段映射、同步范围、留存、角色和同意；客服人员永远不能获得原始数据库凭据。
+5. 激活前必须完成合同/DPA、安全评审、沙箱验证、最小权限范围、审计日志、删除/导出流程、备份恢复演练、告警和回滚。
 
-## Dify role
+## Dify 的角色
 
-The exported Dify classifier prompts, route graph and badcase/evaluation datasets are retained as reference material. They are translated into Commerce Agent route tests and prompts; they do not replace tenant data, authorization, connectors, or controlled tools.
+导出的 Dify 分类提示词、路由图和 badcase/评测集保留为参考资料，可转化为 Commerce Agent 路由测试和提示词；它们不能替代租户数据、授权、连接器或受控工具。

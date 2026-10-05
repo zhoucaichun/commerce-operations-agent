@@ -1,28 +1,28 @@
-# Dify migration boundary
+# Dify 迁移边界
 
-## Decision
+## 决策
 
-`ShopPilot Commerce Agent` is the runtime owner for the ShopPilot 3C Store. Dify is retained as a reviewed historical workflow, migration source, and future regression reference; it is not required for the Store Widget or Store-originated full chat page.
+`ShopPilot Commerce Agent` 是 ShopPilot 3C Store 的运行时所有者。Dify 仅保留为已审查的历史工作流、迁移来源和后续回归参考；Store Widget 与从店铺进入的完整对话页均不依赖 Dify。
 
-## Migrated assets
+## 已迁移资产
 
-| Source | Packaged destination | Runtime use |
+| 来源 | 仓库内目标位置 | 运行时用途 |
 |---|---|---|
-| Dify DSL export | `docs/dify/` | Traceability only; no key or API invocation |
-| 55 synthetic products | `src/backend/commerce_agent/data/dify_product_catalog.csv` | Deterministic search, recommendation, compatibility evidence |
-| 35 synthetic policies | `src/backend/commerce_agent/data/dify_policy_catalog.csv` | Region/topic policy evidence |
-| 100 full + 30 + 15 regression prompts | `src/eval/data/dify_eval_*.csv` | Evaluation source for the next evaluation expansion |
+| Dify DSL 导出 | `docs/dify/` | 仅供追溯，不含密钥，也不会发起 API 调用 |
+| 55 条合成商品 | `src/backend/commerce_agent/data/dify_product_catalog.csv` | 确定性搜索、推荐与兼容性证据 |
+| 35 条合成政策 | `src/backend/commerce_agent/data/dify_policy_catalog.csv` | 地区/主题政策证据 |
+| 100 条全量 + 30 条 + 15 条回归提示 | `src/eval/data/dify_eval_*.csv` | 后续评测扩展的来源 |
 
-`catalog_loader.py` normalizes source headers into the controlled tool schema. The in-memory MVP also retains three legacy safety-test products and two legacy policies, so the runtime count is 58 products and 37 policies.
+`catalog_loader.py` 将源表头规范化为受控工具 Schema。内存 MVP 还保留三条历史安全测试商品和两条历史政策；运行时另有扩展的合成目录，不能把早期 58 条商品、37 条政策的统计口径当作当前完整语料规模。
 
-## Intent and slot correspondence
+## 意图和槽位对应关系
 
-| Historical Dify branch | Commerce Agent path |
+| 历史 Dify 分支 | Commerce Agent 路径 |
 |---|---|
-| Recommendation / budget / candidate sort | `recommend_products` with device, country, budget, category and usage constraints |
-| Compatibility | `compatibility_check` with catalogue declaration and power/port fallback rule |
-| Policy / product availability | `policy_search` filtered by topic and region |
-| Direct high-risk handoff | guard and simulated-ticket/handoff path |
-| Clarification | `needs_input` response when verified information is absent |
+| 推荐 / 预算 / 候选排序 | 以设备、国家、预算、品类和用途约束调用 `recommend_products` |
+| 兼容性 | 以目录声明和功率/接口兜底规则调用 `compatibility_check` |
+| 政策 / 商品可售性 | 以主题、地区、版本元数据过滤调用 `policy_search` |
+| 直接高风险转人工 | 输入防护与模拟工单/人工接管路径 |
+| 澄清 | 已验证信息缺失时返回 `needs_input` |
 
-The current MVP uses deterministic rules, not a model call, so answers stay grounded in the packaged synthetic records. It must not claim real price, stock, Shopify availability, delivery data, or execute a merchant operation.
+当前 MVP 使用确定性规则，因此答复受仓库内合成记录约束；不得声称真实价格、库存、Shopify 可售性、配送数据，也不得执行商家操作。

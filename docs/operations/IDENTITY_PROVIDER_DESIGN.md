@@ -1,14 +1,14 @@
-# Identity provider design (not implemented)
+# 身份提供方设计（未实现）
 
-Future production authentication should use OIDC Authorization Code with PKCE at a company-approved identity provider. Validate issuer, audience, expiry, signature and nonce; map verified groups to `viewer`, `support`, and `operator` server-side. Store provider client secrets only in a managed secret store, rotate them, and never forward access tokens to merchant tools.
+未来生产认证应在公司批准的身份提供方中使用带 PKCE 的 OIDC 授权码模式，校验发行方、受众、过期时间、签名与 nonce，并在服务端将已验证的群组映射为 `viewer`、`support`、`operator`。客户端密钥只保存在受管理的密钥存储中，需轮换，访问令牌不得转发给商家工具。
 
-Before enabling it, add tenant isolation, audited authorization decisions, revocation handling, threat modeling, and an approval review. The MVP's environment-only synthetic token map remains intentionally separate and is not a production identity solution.
+启用前还须补齐租户隔离、可审计的授权决策、撤销处理、威胁建模与审批。MVP 的仅环境变量合成令牌映射有意与之隔离，不是生产身份方案。
 
-## Approval-gated rollout
+## 需审批的发布路径
 
-1. Design review: security approves issuer, scopes, group-to-role mapping, tenant model and audit retention.
-2. Sandbox: use a non-production tenant with synthetic identities only; add negative token, expired token and role-escalation tests.
-3. Pilot: enable for a small approved internal group behind a feature flag, with rollback to the current synthetic mode.
-4. Production: requires signed security approval, secret-manager integration, monitoring, revocation runbook and no connection to merchant mutation tools.
+1. 设计评审：安全团队批准发行方、范围、群组到角色映射、租户模型和审计留存。
+2. 沙箱：仅使用非生产租户与合成身份；补充无效令牌、过期令牌和角色升级测试。
+3. 试点：经批准的小范围内部用户通过功能开关启用，并能回滚至当前合成模式。
+4. 生产：需要签署的安全批准、密钥管理器集成、监控、撤销预案，且不得连接商家写操作工具。
 
-No stage above is implemented by this repository; it is a decision record, not an authorization to connect an identity provider.
+上述阶段均未由本仓库实现；本文是决策记录，不构成接入身份提供方的授权。
