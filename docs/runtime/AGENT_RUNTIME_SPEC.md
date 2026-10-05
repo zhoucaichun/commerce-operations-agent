@@ -13,7 +13,7 @@
 | Component | Production responsibility | MVP status |
 |---|---|---|
 | Model | Extract intent/slots, propose a typed next action, summarize tool evidence, and produce user-facing language | 默认禁用；获批环境变量配置后仅可做合成数据试验，失败回退确定性路径 |
-| Planner | Select `ask_user`, `call_tool`, `respond`, or `handoff` within a typed action schema | Rule-based routing only |
+| Planner | Select `ask_user`, `call_tool`, or `handoff` within a typed action schema | Rule-based routing only; `action` now controls the handoff branch, while missing information is returned as `needs_input` |
 | Tool use | Query approved merchant-scoped read models and create only approved, idempotent support requests | Controlled synthetic tools; simulated tickets only |
 | Memory | Keep thread state, verified slots, tool summaries, and approved preferences in tenant scope | Synthetic sessions/checkpoints; no long-term customer profile |
 | Harness | Enforce identity, tenant scope, schemas, allow-lists, risk routing, limits, auditability, and safe fallback | Core input/risk/step checks exist; production controls remain pending |
@@ -35,7 +35,7 @@ The planner output is a typed record conceptually shaped as:
 
 ```json
 {
-  "action": "ask_user | call_tool | respond | handoff",
+  "action": "ask_user | call_tool | handoff",
   "required_slots": ["device_model"],
   "tool_name": "recommend_products",
   "arguments": {"device_model": "iPhone 15"},
@@ -50,7 +50,7 @@ The planner output is a typed record conceptually shaped as:
 guard -> load scoped memory -> plan -> tool/ask/handoff -> validate -> plan or compose -> persist trace
 ```
 
-当前 Graph 每次请求只运行一次工具处理链，跨轮通过会话状态延续；同请求的反复 replan 是生产目标。Harness 已对高风险、越权和无法校验请求安全降级；完整的超时、重复失败与最大步数编排须在后续实现并评测。
+当前 Graph 每次请求只运行一次规划分支；`CommerceAgent` 内部的商品查询可继续执行知识检索，跨轮通过会话槽位延续。Graph 尚未实现任意工具链的同请求反复 replan；Harness 已对高风险、越权和无法校验请求安全降级，完整的超时、重复失败与任务级最大步数编排仍须评测。
 
 ## 受控工具
 

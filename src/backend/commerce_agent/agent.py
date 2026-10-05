@@ -33,6 +33,15 @@ class CommerceAgent:
         trace: list[dict[str, Any]] = []
         summaries: list[dict[str, Any]] = []
         state = self._load_state(request.thread_id)
+        remembered_slots = {key: value for key, value in state.get("slots", {}).items() if value}
+        if remembered_slots:
+            request = ChatRequest(
+                thread_id=request.thread_id,
+                message=request.message,
+                slots={**remembered_slots, **request.slots},
+                attachments=request.attachments,
+                idempotency_key=request.idempotency_key,
+            )
         if self._forget_memory_request(request.message):
             state = {"thread_id": request.thread_id, "messages": [], "slots": {}, "preferences": {}, "step_count": 0}
             self._save_state(request.thread_id, state)

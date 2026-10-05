@@ -4,7 +4,7 @@
 
 ## 当前实现（2026-10）
 
-- **运行时**：FastAPI + LangGraph 状态机；当前 Graph 每轮执行 `guard -> load_memory -> planner -> tool -> validate -> compose/handoff -> persist`。规划默认由规则完成；可选 OpenAI 兼容模型适配器仅在显式配置后、且仅用于合成数据评测或受控的规划/表达辅助。
+- **运行时**：FastAPI + LangGraph 状态机；当前 Graph 执行 `guard -> load_memory -> planner -> tool -> validate -> compose/handoff -> persist`。规划动作会控制接管分支，历史槽位会合并到当前请求；商品查询内部可追加一次知识检索，但任意工具链的同请求反复 replan 仍是生产强化项。
 - **受控工具**：商品搜索与推荐、兼容性规则、政策检索、知识检索、订单/物流查询、带幂等键的模拟工单。退款、取消订单、地址修改、库存修改和任何真实商家写操作均未启用。
 - **数据与 RAG**：运行时含 **278 条合成商品**、**37 条合成政策**和合成订单/工单 Fixture。本地 RAG 使用 Hashing Embedding + BM25、元数据过滤、融合重排及引用 Trace；它可复现，但不是生产级语义 Embedding 或 pgvector 部署。
 - **存储与部署**：本地直接运行默认使用内存/SQLite；Compose 运行时使用 PostgreSQL 保存合成会话、工单、指标、商品、政策和订单，并使用 Redis 提供就绪检查、限流、幂等锁和检查点辅助。两种模式都不连接真实商家系统。
@@ -57,5 +57,7 @@ python src/eval/run_dify_model_eval.py --report reports/dify-model-eval-dry-run.
 - [RAG 实现](docs/runtime/RAG_IMPLEMENTATION.md)：本地混合 RAG 的事实源、限制与评测；
 - [Agent 评测](docs/agent评测/README.md)：当前评测入口、企业方法、3C 指标与论文综述；
 - [生产边界](docs/operations/PRODUCTION.md)：生产激活前不可省略的安全与运维条件。
+
+当前评测必须区分“已实现回归”和“生产目标”：`python src/eval/run_evaluation.py` 是确定性合成场景检查，`python src/eval/run_rag_eval.py` 是 RAG 检索专项检查；二者都不能替代真实商家线上指标。
 
 部署到任何非合成环境前，必须运行 `python src/infra/validate_proxy_config.py --host <已批准域名>`，并遵循 [身份提供方设计](docs/operations/IDENTITY_PROVIDER_DESIGN.md) 与安全审批清单；本仓库不授予 OIDC 或真实商家系统接入权限。

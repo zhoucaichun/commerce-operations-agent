@@ -44,6 +44,20 @@ class CommerceAgentTests(unittest.TestCase):
         self.assertIn("Synthetic policy", response.answer)
         self.assertEqual(response.tool_result_summary[0]["tool"], "policy_search")
 
+    def test_confirmed_slots_are_used_on_following_turn(self):
+        agent = CommerceAgent(InMemoryStore())
+        agent.handle(ChatRequest.from_dict({
+            "thread_id": "memory-slots",
+            "message": "记住我的设备",
+            "slots": {"device": "MacBook Pro 14"},
+        }))
+        response = agent.handle(ChatRequest.from_dict({
+            "thread_id": "memory-slots",
+            "message": "AC-65W 兼容吗？",
+        }))
+        self.assertEqual(response.status, "completed")
+        self.assertIn("MacBook Pro 14", response.answer)
+
     def test_real_mutations_are_handed_off_without_tool_call(self):
         response = self.request("请直接修改地址并取消订单")
         self.assertEqual(response.status, "handoff")

@@ -20,6 +20,7 @@ class ToolDefinition:
     description: str
     read_only: bool
     requires_idempotency: bool
+    required_arguments: tuple[str, ...]
     handler: Callable[[dict[str, Any]], dict[str, Any]]
 
 
@@ -28,13 +29,13 @@ class ToolRegistry:
         self.store = store
         self.retriever = HybridRetriever(build_knowledge_documents(store.products, store.policies))
         self._tools = {
-            "product_search": ToolDefinition("product_search", "Search the synthetic product catalogue.", True, False, self._product_search),
-            "recommend_products": ToolDefinition("recommend_products", "Rank synthetic catalogue products using deterministic constraints.", True, False, self._recommend_products),
-            "compatibility_check": ToolDefinition("compatibility_check", "Evaluate a deterministic compatibility rule.", True, False, self._compatibility_check),
-            "policy_search": ToolDefinition("policy_search", "Find synthetic policy records by topic and region.", True, False, self._policy_search),
-            "knowledge_search": ToolDefinition("knowledge_search", "Retrieve cited synthetic product and FAQ knowledge using hybrid RAG.", True, False, self._knowledge_search),
-            "order_shipment_lookup": ToolDefinition("order_shipment_lookup", "Look up a verified synthetic order.", True, False, self._order_shipment_lookup),
-            "create_simulated_ticket": ToolDefinition("create_simulated_ticket", "Create a local simulated support ticket.", False, True, self._create_simulated_ticket),
+            "product_search": ToolDefinition("product_search", "Search the synthetic product catalogue.", True, False, ("query",), self._product_search),
+            "recommend_products": ToolDefinition("recommend_products", "Rank synthetic catalogue products using deterministic constraints.", True, False, ("query",), self._recommend_products),
+            "compatibility_check": ToolDefinition("compatibility_check", "Evaluate a deterministic compatibility rule.", True, False, ("sku", "device"), self._compatibility_check),
+            "policy_search": ToolDefinition("policy_search", "Find synthetic policy records by topic and region.", True, False, ("topic",), self._policy_search),
+            "knowledge_search": ToolDefinition("knowledge_search", "Retrieve cited synthetic product and FAQ knowledge using hybrid RAG.", True, False, ("query",), self._knowledge_search),
+            "order_shipment_lookup": ToolDefinition("order_shipment_lookup", "Look up a verified synthetic order.", True, False, ("order_id", "identity_suffix"), self._order_shipment_lookup),
+            "create_simulated_ticket": ToolDefinition("create_simulated_ticket", "Create a local simulated support ticket.", False, True, ("summary",), self._create_simulated_ticket),
         }
 
     @property
@@ -47,6 +48,9 @@ class ToolRegistry:
             raise ToolError("tool is not allow-listed")
         if not isinstance(arguments, dict):
             raise ToolError("tool arguments must be an object")
+        missing = [key for key in definition.required_arguments if not str(arguments.get(key, "")).strip()]
+        if missing:
+            raise ToolError(f"missing required tool arguments: {', '.join(missing)}")
         if definition.requires_idempotency and not idempotency_key:
             raise ToolError("idempotency_key is required for simulated writes")
         self.store.increment("tool_calls")

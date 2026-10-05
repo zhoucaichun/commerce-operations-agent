@@ -69,6 +69,9 @@ class CommerceGraph:
 
     def _tool(self, state: CommerceGraphState) -> dict[str, Any]:
         request, plan = state["request"], state["plan"]
+        if plan.action == "handoff":
+            response = self.agent.handle(request, request_id=state["request_id"], planned_intent="handoff")
+            return self._append(state, "tool", response=response)
         merged_request = ChatRequest(thread_id=request.thread_id, message=request.message, slots={**request.slots, **plan.slots}, attachments=request.attachments, idempotency_key=request.idempotency_key)
         response = self.agent.handle(merged_request, request_id=state["request_id"], planned_intent=plan.intent)
         self.agent._trace(response.trace, state["request_id"], request.thread_id, "model_planner", "used" if plan.model_used else "fallback", error_code=plan.reason_code)

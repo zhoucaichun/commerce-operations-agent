@@ -8,6 +8,7 @@ sys.path.insert(0, str(ROOT / "src" / "backend"))
 from commerce_agent.agent import CommerceAgent
 from commerce_agent.graph import CommerceGraph
 from commerce_agent.models import ChatRequest
+from commerce_agent.runtime import ModelAdapter
 
 
 class GraphOrchestrationTests(unittest.TestCase):
@@ -25,3 +26,18 @@ class GraphOrchestrationTests(unittest.TestCase):
         self.assertEqual(response.status, "handoff")
         self.assertEqual(response.trace[-2]["node"], "graph_handoff")
         self.assertEqual(response.trace[-1]["node"], "graph_persist")
+
+    def test_planner_handoff_action_is_executed_as_handoff(self):
+        model = ModelAdapter(transport=lambda payload: {
+            "action": "handoff",
+            "intent": "handoff",
+            "slots": {},
+            "missing_slots": [],
+            "reason_code": "protected_request",
+        })
+        response = CommerceGraph(CommerceAgent(), model=model).invoke(
+            ChatRequest.from_dict({"thread_id": "planner-handoff", "message": "please ask a human"}),
+            "req-planner-handoff",
+        )
+        self.assertEqual(response.status, "handoff")
+        self.assertIn("graph_handoff", [item["node"] for item in response.trace])
