@@ -56,7 +56,7 @@ class BoundedAgentTests(unittest.TestCase):
         self.assertEqual(result.status, "completed")
         self.assertEqual(result.tool_result_summary[0]["tool"], "recommend_products")
 
-    def test_model_drives_two_tools_and_receives_real_observations(self):
+    def test_model_drives_tools_and_receives_real_observations(self):
         calls = []
         def transport(payload):
             context = json.loads(payload["messages"][1]["content"])
@@ -66,13 +66,14 @@ class BoundedAgentTests(unittest.TestCase):
             count = len(context["observations"])
             return [plan(tool="product_search", slots={"query": "charger"}),
                     plan(tool="policy_search", intent="policy", slots={"topic": "shipping", "country": "US"}),
+                    plan(tool="knowledge_search"),
                     plan(action="answer")][count]
         graph = CommerceGraph(CommerceAgent(), model=ModelAdapter(transport))
         result = graph.invoke(request("charger and shipping"), "req-loop")
         self.assertEqual(result.status, "completed")
-        self.assertEqual([o["tool"] for o in result.tool_result_summary], ["product_search", "policy_search"])
+        self.assertEqual([o["tool"] for o in result.tool_result_summary], ["product_search", "policy_search", "knowledge_search"])
         self.assertIn("products", calls[1]["observations"][0]["evidence"])
-        self.assertEqual(result.plan["steps"], 2)
+        self.assertEqual(result.plan["steps"], 3)
         self.assertTrue(result.plan["model_used"])
         self.assertEqual(graph.agent.store.metrics()["chat_requests"], 1)
 
@@ -86,7 +87,7 @@ class BoundedAgentTests(unittest.TestCase):
         result = CommerceGraph(CommerceAgent(), ModelAdapter(lambda _: plan())).invoke(request("charger"), "req-repeat")
         self.assertEqual(result.status, "handoff")
         self.assertEqual(result.handoff["reason"], "repeated_tool_action")
-        self.assertEqual(len(result.tool_result_summary), 1)
+        self.assertEqual([item["tool"] for item in result.tool_result_summary], ["product_search", "knowledge_search"])
 
     def test_six_tool_limit_is_per_task_not_lifetime(self):
         def transport(payload):

@@ -46,6 +46,7 @@ type AgentResponse = {
 type DemoAttachment = { kind: "image" | "audio"; name: string; mime_type: string; size_bytes: number; demo_scenario: string };
 
 type StoredChatState = {
+  threadId?: string;
   messages: ChatMessage[];
   conversationId: string;
   inputText: string;
@@ -296,16 +297,17 @@ export default function ChatDemoPage() {
   const deviceModel = searchParams.get("device_model")?.trim() || "";
   const budget = searchParams.get("budget")?.trim() || "";
   const usageScenario = searchParams.get("usage_scenario")?.trim() || "";
+  const [agentThreadId, setAgentThreadId] = useState(() => suppliedThreadId || `web-agent-${crypto.randomUUID()}`);
   const storageKey = useMemo(
     () =>
-      buildStorageKey({
+      fromStore ? `shoppilot-agent-thread:${agentThreadId}` : buildStorageKey({
         query: initialQuery,
         country,
         deviceModel,
         budget,
         usageScenario
       }),
-    [budget, country, deviceModel, initialQuery, usageScenario]
+    [budget, country, deviceModel, initialQuery, usageScenario, fromStore, agentThreadId]
   );
 
   const [messages, setMessages] = useState<ChatMessage[]>(
@@ -321,7 +323,7 @@ export default function ChatDemoPage() {
   const [isReady, setIsReady] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const agentThreadRef = useRef("");
-  if (!agentThreadRef.current) agentThreadRef.current = suppliedThreadId || `web-agent-${crypto.randomUUID()}`;
+  agentThreadRef.current = agentThreadId;
 
   useEffect(() => {
     const mockEnabled = process.env.NEXT_PUBLIC_USE_MOCK === "true";
@@ -329,7 +331,8 @@ export default function ChatDemoPage() {
     setIsReady(false);
     setIsSubmitting(Boolean(initialQuery));
 
-    if (!initialQuery) {
+    const stored = readStoredChat(storageKey);
+    if (!initialQuery && !stored) {
       setMessages([]);
       setInputText("");
       setConversationId("");
@@ -339,8 +342,8 @@ export default function ChatDemoPage() {
       return;
     }
 
-    const stored = readStoredChat(storageKey);
     if (stored) {
+      if (stored.threadId) setAgentThreadId(stored.threadId);
       const restoredMessages = stored.messages?.length
         ? stored.messages
         : buildChatMessages(initialQuery);
@@ -483,12 +486,13 @@ export default function ChatDemoPage() {
   useEffect(() => {
     if (!isReady) return;
     writeStoredChat(storageKey, {
+      threadId: agentThreadId,
       messages,
       conversationId,
       inputText,
       liveRecommendation
     });
-  }, [conversationId, inputText, isReady, liveRecommendation, messages, storageKey]);
+  }, [agentThreadId, conversationId, inputText, isReady, liveRecommendation, messages, storageKey]);
 
   async function submitQuery(queryText: string) {
     const trimmed = queryText.trim();
@@ -658,6 +662,7 @@ export default function ChatDemoPage() {
     setConversationId("");
     setLiveRecommendation(null);
     setIsSubmitting(false);
+    setAgentThreadId(`web-agent-${crypto.randomUUID()}`);
     window.history.replaceState(null, "", pathname);
   }
 

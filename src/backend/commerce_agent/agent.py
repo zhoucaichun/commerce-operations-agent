@@ -16,7 +16,7 @@ from .tools import ToolError, ToolRegistry
 
 
 MAX_STEPS = 6
-PROMPT_VERSION = "bounded-loop-v2"
+PROMPT_VERSION = "bounded-loop-v3"
 
 
 class CommerceAgent:
@@ -103,7 +103,7 @@ class CommerceAgent:
 
     def _handle_compatibility(self, request, state, trace, summaries, request_id):
         sku = request.slots.get("sku") or self._find_sku(request.message)
-        device = request.slots.get("device") or self._find_device(request.message)
+        device = request.slots.get("device") or request.slots.get("device_model") or self._find_device(request.message)
         if not sku:
             return AgentResponse(
                 status="needs_input",
@@ -214,9 +214,10 @@ class CommerceAgent:
         knowledge = self._call_tool("knowledge_search", {"query": request.message, "kind": "product"}, request, request_id, trace, summaries) if include_knowledge else {}
         citations = knowledge.get("citations", [])[:2]
         citation_note = "；".join(f"{item['document_id']}/{item['chunk_id']}@{item['version']}" for item in citations) or "未检索到补充知识片段"
+        evidence_note = f"补充检索证据：{citation_note}。" if include_knowledge else ""
         return AgentResponse(
             status="completed",
-            answer=f"模拟商品目录匹配结果：{products}。补充检索证据：{citation_note}。库存仅为演示数据，不会扣减。",
+            answer=f"模拟商品目录匹配结果：{products}。{evidence_note}库存仅为演示数据，不会扣减。",
             request_id=request_id,
             thread_id=request.thread_id,
         )

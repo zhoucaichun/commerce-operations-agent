@@ -46,6 +46,12 @@ class NextWebBridgeTests(unittest.TestCase):
         self.assertIn("thread=", widget)
         self.assertIn('searchParams.get("thread")', page)
         self.assertIn("agentThreadRef.current", page)
+        self.assertIn("shoppilot-agent-thread:", widget)
+        self.assertIn("shoppilot-agent-thread:", page)
+        self.assertIn("tool_result_summary?.flatMap", widget)
+        self.assertLess(page.index("const stored = readStoredChat(storageKey)"), page.index("if (!initialQuery && !stored)"))
+        self.assertIn("setAgentThreadId(`web-agent-${crypto.randomUUID()}`)", page)
+        self.assertIn("if (stored.threadId) setAgentThreadId(stored.threadId)", page)
 
     def test_storefront_full_chat_uses_privacy_composer_and_safe_demo_controls(self):
         page = (WEB / "app" / "chat-demo" / "page.tsx").read_text(encoding="utf-8")

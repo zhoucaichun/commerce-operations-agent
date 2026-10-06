@@ -6,8 +6,8 @@ from typing import Any, TypedDict
 import time
 
 from langgraph.graph import END, START, StateGraph
-from .agent import CommerceAgent, MAX_STEPS
-from .memory import merge_slots, model_context
+from .agent import CommerceAgent, MAX_STEPS, PROMPT_VERSION
+from .memory import clean_slots, merge_slots, model_context
 from .models import AgentResponse, ChatRequest
 from .multimodal import analyze_attachments
 from .runtime import ActionPlan, ModelAdapter, Planner, TOOL_BY_INTENT
@@ -101,7 +101,7 @@ class CommerceGraph:
         slots = merge_slots(memory, req.message, req.slots, intent)
         multimodal = analyze_attachments(req.attachments)
         if multimodal:
-            slots = {**slots, **multimodal["slots"], **req.slots}
+            slots = clean_slots({**slots, **multimodal["slots"], **req.slots})
         req = replace(req, slots=slots)
         memory["slots"] = slots
         memory["step_count"] = 0
@@ -113,6 +113,11 @@ class CommerceGraph:
         if risk:
             values["response"] = self._response(state, "handoff", "此请求涉及风险或禁止的真实写操作，不能自动执行，已建议人工接管。", risk)
             values["terminal"] = True
+        elif any(term in req.message.lower() for term in ("remember my", "记住我的", "记住我常用")) and self.agent._classify_intent(req.message.lower()) == "unsupported":
+            remembered = memory.get("preferences", {})
+            values["terminal"] = True
+            values["response"] = self._response(state, "completed" if remembered else "needs_input",
+                "已记住本会话中你明确提供的设备或偏好；仅用于模拟服务，不修改商家数据。" if remembered else "请补充需要记住的设备或偏好。")
         return self._append(state, "load_memory", **values)
 
     @staticmethod
@@ -125,14 +130,28 @@ class CommerceGraph:
         req = state["request"]
         message, slots = model_context(req.message, req.slots)
         contracts = [c for c in self.agent.tools.contracts() if c["name"] in state["allowed_tools"]]
-        plan = self.planner.plan(message, slots, state["observations"], contracts)
+        plan = self.planner.plan(message, slots, state["observations"], contracts,
+                                 {"intent": state["primary_intent"], "pending_input": bool(state["memory"].get("pending_input")),
+                                  "identity_suffix_supplied": bool(req.slots.get("identity_suffix")),
+                                  "idempotency_key_supplied": bool(req.idempotency_key)})
         if not plan.model_used and not state["observations"] and state["primary_intent"] != "unsupported":
             plan = replace(plan, intent=state["primary_intent"], action="call_tool", missing_slots=[])
         if plan.slots.get("identity_suffix") or (plan.slots.get("order_id") and plan.slots["order_id"] != req.slots.get("order_id")):
             self.planner.model.record_rejection("planner_identity_rejected")
             plan = self.planner._fallback(message, slots, state["observations"])
-        proposed = {k: v for k, v in plan.slots.items() if k not in {"identity_suffix", "order_id"}}
+        proposed = clean_slots({k: v for k, v in plan.slots.items() if k not in {"identity_suffix", "order_id"}})
         req = replace(req, slots={**req.slots, **proposed, **state["grounded_slots"]})
+        if not state["observations"] and state["memory"].get("pending_input") and self.agent._classify_intent(req.message.lower()) == "unsupported" and plan.action != "handoff":
+            plan = replace(plan, intent=state["primary_intent"], tool=None, action="call_tool", missing_slots=[])
+        if state["primary_intent"] == "compatibility" and plan.action != "handoff":
+            missing = [key for key in ("sku", "device") if not (req.slots.get(key) or (key == "device" and req.slots.get("device_model")))]
+            if missing:
+                plan = replace(plan, intent="compatibility", tool=None, action="ask_user", missing_slots=missing, reason_code="missing_compatibility_fields")
+        completed_tools = {item["tool"] for item in state["observations"] if item.get("ok")}
+        repeats_product = (plan.tool or TOOL_BY_INTENT.get(plan.intent)) == "product_search" and f"product_search:{sorted(req.slots.items())}" in state["seen"]
+        if (plan.action == "answer" or (plan.action == "call_tool" and repeats_product)) and state["primary_intent"] == "product" and "product_search" in completed_tools and "knowledge_search" not in completed_tools:
+            plan = replace(plan, action="call_tool", intent="product", tool="knowledge_search", reason_code="required_product_evidence")
+            self.agent._trace(state["trace"], state["request_id"], req.thread_id, "contract_guard", "required_product_evidence")
         tool = plan.tool or TOOL_BY_INTENT.get(plan.intent)
         if plan.action == "answer" and not state["observations"]:
             plan = replace(plan, action="call_tool")
@@ -153,6 +172,7 @@ class CommerceGraph:
             questions = {"device": "请补充设备型号。", "device_model": "请补充设备型号。", "sku": "请补充商品 SKU。",
                          "order_id": "请提供模拟订单号。", "identity_suffix": "请补充下单身份后四位，不要提供完整身份信息。",
                          "country": "请补充配送国家或地区。", "budget": "请补充预算。"}
+            questions["idempotency_key"] = "创建模拟客服工单前，请提供本次请求的 idempotency_key（8-128 个安全字符）。"
             values["response"] = self._response(state, "needs_input", questions.get(next(iter(plan.missing_slots), ""), "请补充设备、商品或任务目标中的一个关键条件。"))
         return self._append(state, "planner", **values)
 
@@ -221,7 +241,7 @@ class CommerceGraph:
         plans = state["plans"]
         if plans:
             response.plan = {**plans[0], "steps": state["steps"], "actions": plans,
-                             "model_version": self.planner.model.version, "prompt_version": "bounded-loop-v2",
+                             "model_version": self.planner.model.version, "prompt_version": PROMPT_VERSION,
                              "elapsed_ms": round((time.perf_counter() - state["started"]) * 1000, 2),
                              "usage": {k: v - state["usage_start"].get(k, 0) for k, v in self.planner.model.usage.items()}}
         if not self.agent._forget_memory_request(state["request"].message):

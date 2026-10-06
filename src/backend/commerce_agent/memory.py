@@ -8,6 +8,14 @@ SLOT_NAMES = {"device", "device_model", "country", "region", "budget", "budget_t
               "usage_scenario", "category", "query", "sku", "order_id", "identity_suffix", "topic"}
 
 
+def clean_slots(slots: dict[str, Any]) -> dict[str, str]:
+    """Placeholder values are missing information, never usable tool inputs."""
+    placeholders = {"", "unknown", "null", "none", "n/a", "undefined", "未知", "未提供", "不详"}
+    return {key: str(value).strip()[:256] for key, value in slots.items()
+            if key in SLOT_NAMES and isinstance(value, (str, int, float))
+            and not isinstance(value, bool) and str(value).strip().lower() not in placeholders}
+
+
 def explicit_slots(message: str) -> dict[str, str]:
     slots: dict[str, str] = {}
     patterns = {
@@ -37,8 +45,8 @@ def explicit_slots(message: str) -> dict[str, str]:
 
 
 def merge_slots(memory: dict[str, Any], message: str, supplied: dict[str, str], intent: str) -> dict[str, str]:
-    current = {**explicit_slots(message), **{k: v for k, v in supplied.items() if k in SLOT_NAMES}}
-    old = {k: v for k, v in memory.get("slots", {}).items() if k in SLOT_NAMES}
+    current = {**explicit_slots(message), **clean_slots(supplied)}
+    old = clean_slots(memory.get("slots", {}))
     # Business context does not follow a user into a different task family.
     previous = memory.get("intent")
     if intent != "unsupported" and previous and intent != previous:
@@ -52,7 +60,7 @@ def merge_slots(memory: dict[str, Any], message: str, supplied: dict[str, str], 
         old.pop("device", None)
     if "budget" in current:
         old.pop("budget_text", None)
-    return {**memory.get("preferences", {}), **old, **current}
+    return {**clean_slots(memory.get("preferences", {})), **old, **current}
 
 
 def model_context(message: str, slots: dict[str, str]) -> tuple[str, dict[str, str]]:
