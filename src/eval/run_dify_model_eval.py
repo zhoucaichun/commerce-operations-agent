@@ -24,6 +24,7 @@ from commerce_agent.agent import CommerceAgent
 from commerce_agent.graph import CommerceGraph
 from commerce_agent.models import ChatRequest
 from commerce_agent.runtime import ModelAdapter
+from commerce_agent.config import load_local_config
 
 
 DATASETS = (
@@ -121,6 +122,8 @@ def main() -> None:
         if args.limit < 1:
             raise SystemExit("--limit must be positive")
         cases = cases[:args.limit]
+    if args.live:
+        load_local_config()
     model = ModelAdapter()
     if args.live and not model.enabled:
         raise SystemExit("--live requires COMMERCE_LLM_BASE_URL, COMMERCE_LLM_API_KEY, and COMMERCE_LLM_MODEL. No request was sent.")

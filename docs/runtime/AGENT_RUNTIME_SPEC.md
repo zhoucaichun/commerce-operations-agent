@@ -1,79 +1,43 @@
-# Agent 运行时契约
+# ShopPilot Agent 运行时契约
 
-## 状态与用途
+更新：2026-10-06。本文描述当前合成 MVP；生产接入与验收不能由本地测试代替。产品目标见 [PRD](../PRD.md)，历史迁移见 [Dify 工作流](DIFY_WORKFLOW_SPEC.md)，发布标准见 [评测规范](../agent评测/评测规范.md)。
 
-这是 ShopPilot Commerce Agent 的运行时契约。它区分当前 MVP 与生产目标，并补充 [PRD](../PRD.md) 的用户结果、[技术架构](../技术架构.md) 的实现视图、[Dify 工作流说明](DIFY_WORKFLOW_SPEC.md) 的历史迁移关系，以及 [评测规范](../agent评测/评测规范.md) 的发布门槛。
+## 模型（Model）
 
-**当前 MVP：**FastAPI 在确定性的目录、兼容性、政策、订单和模拟工单工具外运行 LangGraph 状态机。模型适配器默认未配置；在显式环境变量配置后，可仅对合成数据进行受控的 OpenAI 兼容模型试验，失败始终回退为规则路径。当前 Planner 默认是关键词/规则路由，而非生产级 LLM Planner；全部数据均为合成或标记为公开参考的演示数据。
+模型适配器默认未配置：仓库不携带密钥。用户在 `src/backend/.env` 配置后，`main:app` 加载并通过 OpenAI 兼容聊天接口调用模型；离线评测显式禁用网络。当前候选配置与更换方法见 [统一配置](模型选型与统一配置.md)。
 
-**生产目标：**模型辅助的 Planner 和回答编排器可改善语言理解与解释，但所有运营事实和决策仍受下述工具、Schema、政策、授权和安全 Harness 约束。
+模型实际参与结构化规划、槽位提取和基于工具证据的回答。输出必须通过本地动作、意图和槽位校验；超时、无效 JSON 或接口错误会回退规则。报告中的 `model_used`、诊断和向量检索模式用于区别真实模型执行与回退，回退不算模型成功。
 
-## 运行时职责
+## 规划（Planner）
 
-| Component | Production responsibility | MVP status |
-|---|---|---|
-| Model | Extract intent/slots, propose a typed next action, summarize tool evidence, and produce user-facing language | 默认禁用；获批环境变量配置后仅可做合成数据试验，失败回退确定性路径 |
-| Planner | Select `ask_user`, `call_tool`, or `handoff` within a typed action schema | Rule-based routing only; `action` now controls the handoff branch, while missing information is returned as `needs_input` |
-| Tool use | Query approved merchant-scoped read models and create only approved, idempotent support requests | Controlled synthetic tools; simulated tickets only |
-| Memory | Keep thread state, verified slots, tool summaries, and approved preferences in tenant scope | Synthetic sessions/checkpoints; no long-term customer profile |
-| Harness | Enforce identity, tenant scope, schemas, allow-lists, risk routing, limits, auditability, and safe fallback | Core input/risk/step checks exist; production controls remain pending |
+真实节点为 `guard_input → load_memory → planner → tool → validate → planner`，模型读取前一步工具结果，可继续选择不同工具、追问、回答或接管。回答/接管/追问后进入持久化并终止本次请求；追问在下一次请求通过会话继续。
 
-## 模型契约
+允许动作：`call_tool / ask_user / answer / handoff`。工具名必须在注册白名单以及当前调用者的工具权限内；没有观察证据时的直接回答会先走受控事实工具。同一工具和相同参数重复执行会接管。每次任务最多六次工具调用，不是整段会话累计六次；同请求多步与跨轮记忆是两种不同机制。
 
-The model may classify, extract slots, ask one necessary question, choose among registered actions, re-rank tool candidates using declared attributes, and compose an evidence-grounded answer. It must not:
+## 工具使用（Tool use）
 
-- invent SKU, price, stock, shipment, policy, compatibility, order, or merchant facts;
-- make refund, cancellation, inventory, address, payout, or permission decisions;
-- issue raw SQL, HTTP requests, shell commands, or unvalidated tool arguments;
-- expose hidden reasoning, secrets, full personal data, or another tenant's records.
+工具：`product_search`、`recommend_products`、`compatibility_check`、`policy_search`、`knowledge_search`、`order_shipment_lookup`、`create_simulated_ticket`。结构化价格、库存、订单归属、兼容性由工具决定，不由模型猜测。
 
-The model receives minimized, role-scoped context and summarized prior tool results. It returns a schema-validated action; internal reasoning is neither requested nor persisted as customer-visible trace data.
+注册表执行输入/输出契约校验。只读工具默认二十秒等待上限、最多一次瞬时错误重试；校验错误不重试。工作线程超时不等于强制取消底层 HTTP，四个只读工作槽限制并发；尚无完整任务级墙钟熔断。工单写入需要幂等键，只写合成系统，不自动重试写入。
 
-## Planner 与循环
+订单号与身份后四位必须来自用户或已验证会话，模型不能补造。更换订单号后清除旧身份。退款、取消、地址/库存修改先在护栏接管，不发送真实商家操作。
 
-The planner output is a typed record conceptually shaped as:
+## 记忆（Memory）
 
-```json
-{
-  "action": "ask_user | call_tool | handoff",
-  "required_slots": ["device_model"],
-  "tool_name": "recommend_products",
-  "arguments": {"device_model": "iPhone 15"},
-  "user_question": null,
-  "reason_code": "recommendation_ready"
-}
-```
+白名单槽位实际参与下一次规划；当前明确输入覆盖旧值，业务场景切换清除不适用的业务槽位。支持设备修改、身份补充和显式清除记忆。身份后四位不进入模型上下文；有限邮箱/长数字/密钥模式脱敏不是完整 DLP，生产数据尚未获准输入。
 
-每轮只接受一个动作。`tool_name` 必须在注册白名单中，API 入参和模型动作均须经过本地校验。生产目标中的循环是：
+单用户 API 在启用演示认证时按认证主体与会话哈希隔离；Widget 按商家与会话隔离。商家演示使用独立内存 SQLite 实例，重启会丢失这些实例。主 API 的 SQLite/PostgreSQL 可持久化；有配置时 Redis 辅助检查点。共享锁串行化单个 Agent 的回合，这是 MVP 一致性保护，不是高并发生产方案。
 
-```text
-guard -> load scoped memory -> plan -> tool/ask/handoff -> validate -> plan or compose -> persist trace
-```
+## 执行护栏（Harness）
 
-当前 Graph 每次请求只运行一次规划分支；`CommerceAgent` 内部的商品查询可继续执行知识检索，跨轮通过会话槽位延续。Graph 尚未实现任意工具链的同请求反复 replan；Harness 已对高风险、越权和无法校验请求安全降级，完整的超时、重复失败与任务级最大步数编排仍须评测。
+API 与 Widget 均校验请求，执行限流、幂等锁；没有 Redis 时使用进程内防护。启用演示认证时 Widget/BFF 必须使用绑定商家的令牌，普通 viewer 即使模型选择订单/写工具也会被工具白名单阻断。认证主体之间的 API 幂等键隔离。未经批准不配置真实 OIDC、商家系统或生产角色映射。
 
-## 受控工具
+工具结果是观察，不是指令。模型表达以受控草稿与实际证据为依据，检查新增 SKU、数字、订单号与引用；这些检查不是完整语义忠实性证明，还需人工校准的语义评测。
 
-| Tool family | Required proof before response | Authority |
-|---|---|---|
-| Product search and recommendation | Tenant catalogue records, source label, effective price/availability timestamp | Read-only |
-| Compatibility | Registered compatibility rule/version plus product/device fields | Read-only decision support |
-| Policy | Effective policy version, region and applicability | Read-only |
-| Order and shipment | Tenant scope, order identifier, required ownership check | Read-only, minimized output |
-| Support ticket | Valid idempotency key and approved handoff reason | Controlled write; no commerce mutation |
+## 返回与验收
 
-Future Shopify/ERP/OMS adapters query a tenant-local, read-only projection, never arbitrary merchant database credentials. See [PRODUCTION_MERCHANT_DATA.md](../integration/PRODUCTION_MERCHANT_DATA.md).
+返回 `status / answer / request_id / thread_id / plan / tool_result_summary / trace`。规划包含版本、工具步数、耗时与供应商返回 Token；不返回密钥或媒体字节。前端可展开节点记录、模型参与和引用。
 
-## 记忆与 Trace 契约
+统一离线验收：`python src/eval/run_project_checks.py`。显式联网小批验证：`python src/eval/run_project_checks.py --live --limit 3`，使用配置额度，先探测聊天与向量接口。三条通过也不等于全部发布验收；完整集使用 `run_agent_eval.py --live`。
 
-Short-term memory may contain a `thread_id`, verified slots, concise message summaries, tool references, risk state, and retry/step counters. Long-term preferences require explicit user confirmation. Attachments, raw secrets, full identity data, and hidden model reasoning are not placed in prompts, checkpoints, or logs.
-
-Every operation records request/thread/tenant identifiers, action and tool names, schema-safe parameters, evidence references, policy/prompt/model versions where applicable, timing, status, and reason codes. Audit records are tenant-scoped and retention-controlled.
-
-## 生产激活前的 Harness 要求
-
-1. OIDC authentication with organization, membership, and role mapping; a Widget visitor never receives staff permissions.
-2. PostgreSQL row-level tenant isolation, encrypted secrets, rate limits, idempotency locks, tool timeouts, retries, circuit breakers, and alerting.
-3. Prompt-injection defenses for text/OCR, attachment scanning and consent controls, and no unrestricted browser/model tool access.
-4. Approval gates for any new write capability; refunds, cancellations, inventory changes, and address changes remain disabled unless separately designed and approved.
-5. Evaluation gates defined in [评测规范.md](../agent评测/评测规范.md), red-team tests, security review, sandbox connector verification, and rollback drills.
+本次离线通过不证明真实 LLM + 全量语义索引端到端质量。审批、真实商家接入、OIDC/RLS、盲测与人工裁判校准仍未完成。

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import os
+import hashlib
+import re
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -65,7 +67,8 @@ def create_app(agent_instance: CommerceAgent | None = None) -> FastAPI:
 
     @app.middleware("http")
     async def request_id_middleware(request: Request, call_next):
-        request_id = request.headers.get("X-Request-ID") or f"req_{uuid4().hex}"
+        supplied_id = request.headers.get("X-Request-ID", "")
+        request_id = supplied_id if re.fullmatch(r"[A-Za-z0-9_.:-]{1,100}", supplied_id) else f"req_{uuid4().hex}"
         request.state.request_id = request_id
         response = await call_next(request)
         response.headers["X-Request-ID"] = request_id
@@ -126,17 +129,27 @@ def create_app(agent_instance: CommerceAgent | None = None) -> FastAPI:
         except PermissionError as exc:
             request.app.state.agent.store.increment("failure:PermissionError")
             raise HTTPException(status_code=403, detail=str(exc)) from exc
+        if request.app.state.authenticator.required:
+            scope = hashlib.sha256(principal.subject.encode()).hexdigest()[:12]
+            thread = hashlib.sha256(domain_request.thread_id.encode()).hexdigest()[:24]
+            scoped_payload = {**payload.model_dump(), "thread_id": f"api:{scope}:{thread}"}
+            if domain_request.idempotency_key:
+                scoped_payload["idempotency_key"] = "api:" + hashlib.sha256((scope + ":" + domain_request.idempotency_key).encode()).hexdigest()
+            domain_request = ChatRequest.from_dict(scoped_payload)
         guard = request.app.state.redis_health
         if not guard.allow(domain_request.thread_id):
             request.app.state.agent.store.increment("failure:RateLimitExceeded")
             raise HTTPException(status_code=429, detail="rate limit exceeded")
         locked = False
         if domain_request.idempotency_key:
-            locked = guard.acquire_idempotency_lock(domain_request.idempotency_key)
+            locked = guard.acquire_idempotency_lock(domain_request.idempotency_key, ttl_seconds=600)
             if not locked:
                 raise HTTPException(status_code=409, detail="idempotent request is already in progress")
         try:
-            response = request.app.state.graph.invoke(domain_request, request_id=x_request_id or request.state.request_id)
+            allowed = list(request.app.state.agent.tools.names)
+            if principal.role == "viewer":
+                allowed = [name for name in allowed if name not in {"order_shipment_lookup", "create_simulated_ticket"}]
+            response = request.app.state.graph.invoke(domain_request, request_id=request.state.request_id, allowed_tools=allowed)
             request.app.state.agent._trace(response.trace, response.request_id, response.thread_id, "authorize", principal.role)
         finally:
             if locked:
@@ -152,22 +165,52 @@ def create_app(agent_instance: CommerceAgent | None = None) -> FastAPI:
         return {"merchant_id": merchant["merchant_id"], "title": merchant["widget_title"], "origin": merchant["origin"], "mode": "synthetic_demo"}
 
     @app.post("/api/v1/widget/chat")
-    def widget_chat(payload: WidgetChatPayload, request: Request) -> JSONResponse:
+    def widget_chat(payload: WidgetChatPayload, request: Request, authorization: str | None = Header(default=None)) -> JSONResponse:
+        # Required-mode deployments must authenticate their BFF; visitors never
+        # inherit staff authority from the BFF token. Order ownership stays local.
+        if request.app.state.authenticator.required:
+            try:
+                principal = request.app.state.authenticator.authenticate(authorization)
+                request.app.state.authenticator.authorize_merchant(principal, payload.merchant_id)
+            except AuthenticationError as exc:
+                raise HTTPException(status_code=401, detail=str(exc)) from exc
+            except PermissionError as exc:
+                raise HTTPException(status_code=403, detail=str(exc)) from exc
         try:
             graph = request.app.state.demo_tenants.graph(payload.merchant_id)
             agent = request.app.state.demo_tenants.agent(payload.merchant_id)
         except KeyError as exc:
             raise HTTPException(status_code=404, detail="unknown demo merchant") from exc
         try:
-            domain_request = ChatRequest.from_dict({**payload.model_dump(), "thread_id": f"widget:{payload.merchant_id}:{payload.thread_id}"})
+            thread = hashlib.sha256(payload.thread_id.encode()).hexdigest()[:24]
+            domain_request = ChatRequest.from_dict({**payload.model_dump(), "thread_id": f"widget:{payload.merchant_id}:{thread}"})
         except ValidationError as exc:
             agent.store.increment("failure:ValidationError")
             raise HTTPException(status_code=422, detail=str(exc)) from exc
-        response = graph.invoke(domain_request, request_id=request.state.request_id)
+        guard = request.app.state.redis_health
+        if not guard.allow(domain_request.thread_id):
+            raise HTTPException(status_code=429, detail="rate limit exceeded")
+        lock_key = f"{payload.merchant_id}:{domain_request.idempotency_key}" if domain_request.idempotency_key else None
+        if lock_key and not guard.acquire_idempotency_lock(lock_key, ttl_seconds=600):
+            raise HTTPException(status_code=409, detail="idempotent request is already in progress")
+        try:
+            response = graph.invoke(domain_request, request_id=request.state.request_id)
+        finally:
+            if lock_key:
+                guard.release_idempotency_lock(lock_key)
         return JSONResponse({**response.as_dict(), "merchant_id": payload.merchant_id, "mode": "synthetic_demo"})
 
     @app.post("/api/v1/demo/console/overview")
-    def console_overview(payload: ConsolePayload, request: Request) -> dict[str, Any]:
+    def console_overview(payload: ConsolePayload, request: Request, authorization: str | None = Header(default=None)) -> dict[str, Any]:
+        if request.app.state.authenticator.required:
+            try:
+                principal = request.app.state.authenticator.authenticate(authorization)
+                request.app.state.authenticator.authorize(principal, "support")
+                request.app.state.authenticator.authorize_merchant(principal, payload.merchant_id)
+            except AuthenticationError as exc:
+                raise HTTPException(status_code=401, detail=str(exc)) from exc
+            except PermissionError as exc:
+                raise HTTPException(status_code=403, detail=str(exc)) from exc
         try:
             merchant = request.app.state.demo_tenants.merchant(payload.merchant_id)
         except KeyError as exc:
@@ -179,7 +222,16 @@ def create_app(agent_instance: CommerceAgent | None = None) -> FastAPI:
         return overview
 
     @app.patch("/api/v1/demo/console/tickets/{ticket_id}")
-    def update_demo_ticket(ticket_id: str, payload: TicketStatusPayload, request: Request) -> dict[str, Any]:
+    def update_demo_ticket(ticket_id: str, payload: TicketStatusPayload, request: Request, authorization: str | None = Header(default=None)) -> dict[str, Any]:
+        if request.app.state.authenticator.required:
+            try:
+                principal = request.app.state.authenticator.authenticate(authorization)
+                request.app.state.authenticator.authorize(principal, "support")
+                request.app.state.authenticator.authorize_merchant(principal, payload.merchant_id)
+            except AuthenticationError as exc:
+                raise HTTPException(status_code=401, detail=str(exc)) from exc
+            except PermissionError as exc:
+                raise HTTPException(status_code=403, detail=str(exc)) from exc
         if payload.role not in {"support", "merchant_admin"}:
             raise HTTPException(status_code=403, detail="only synthetic support roles may update simulated tickets")
         try:

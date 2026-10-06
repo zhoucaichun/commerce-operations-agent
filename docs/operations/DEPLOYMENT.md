@@ -7,7 +7,7 @@ Compose 通过 `COMMERCE_POSTGRES_DSN` 让 API 使用 PostgreSQL 保存合成会
 ## Compose 启动
 
 ```powershell
-docker compose -p commerce-agent -f src/infra/docker-compose.yml up --build -d
+docker compose --env-file src/backend/.env -p commerce-agent -f src/infra/docker-compose.yml up --build -d
 Invoke-WebRequest http://127.0.0.1:8000/health
 Invoke-WebRequest http://127.0.0.1:8000/ready
 ```

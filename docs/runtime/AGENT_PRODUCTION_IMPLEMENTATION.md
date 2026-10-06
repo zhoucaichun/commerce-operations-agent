@@ -1,55 +1,25 @@
-# Agent 完成度与生产激活计划
+# Agent 实现与生产边界
 
-This document is the implementation record for the ten Agent capabilities. It distinguishes code available in this repository from activation that requires an external merchant, model provider, or identity-provider authorization.
+更新：2026-10-06。当前是合成数据上的可运行 Agent MVP，不是已上线企业系统。权威契约见 [运行时说明](AGENT_RUNTIME_SPEC.md)、[RAG 说明](RAG_IMPLEMENTATION.md) 和 [升级验收](升级验收与待审批事项.md)。
 
-| Capability | Delivered in repository | Activation boundary |
+| 能力 | 当前实现 | 尚未完成的验收或生产工作 |
 |---|---|---|
-| 1. Model adapter | OpenAI-compatible `ModelAdapter`, Qwen-compatible provider label, optional JSON Schema request, local typed validation, timeout, environment-only configuration, deterministic fallback | Provide an approved provider endpoint/key/model outside Git; run the synthetic Dify model evaluation before enabling |
-| 2. Agent loop | LangGraph `guard -> load_memory -> planner -> tool -> validate -> compose/handoff -> persist`; six-step inner tool boundary | Model planner/composer only after evaluation gate passes |
-| 3. Dify migration | Four Dify branch families mapped to typed intents, slots, controlled tools, and regression records | Review/port any later Dify prompt change through versioned tests |
-| 4. Tool harness | Allow-list, typed plan validation, tool-result validation, read-only retry, idempotent simulated ticket, risk handoff | No commerce write is enabled; any new write requires security/product approval |
-| 5. Memory | Thread-scoped summaries/slots, bounded compaction, explicit preference writing, user memory-delete command | Tenant-scoped durable memory, retention/deletion jobs, and consent review for production |
-| 6. 检索/推荐 | 目录确定性筛选；政策/FAQ/商品说明的 Hashing + BM25 混合 RAG、元数据过滤、重排、来源引用；兼容性规则与互补套装选择 | 获批数据接入后替换为生产 Embedding + pgvector（或获批向量库）及商家目录投影 |
-| 7. Multimodal | Bounded metadata adapter, safety/confidence gate, battery-risk handoff, no byte retention | Approved STT/vision provider, encrypted object store, scanning, EXIF stripping, consent/retention controls |
-| 8. Human handoff | Reason code, structured summary, priority, SLA target, simulated lifecycle and idempotent ticket creation | Approved helpdesk integration and staff workflow/SLA ownership |
-| 9. Evaluation | Unit/API/graph/model-safety tests, deterministic smoke/eval, Dify source datasets, regression contract | Human labels, held-out model suite, red-team results, score thresholds and release sign-off |
-| 10. Merchant/OIDC | Read-only connector protocol, disabled-by-default Shopify boundary, readiness endpoint, synthetic roles | Shopify OAuth/sandbox/test merchant, encrypted secret manager, PostgreSQL RLS, OIDC issuer and security approval |
+| 模型 | OpenAI 兼容聊天，结构化规划和证据表达，错误回退 | 全量真实模型回归、候选模型对照、人工校准 |
+| 编排 | LangGraph 真实工具观察→重规划，单任务最多六次工具调用 | 整任务超时熔断、人工中断恢复、高并发 |
+| 工具 | 白名单、输入/输出校验、只读超时与有限重试、模拟工单幂等 | 获批真实连接器、取消传播、生产事务 |
+| 记忆 | 槽位覆盖、场景切换、订单身份重新校验、删除、会话隔离 | 演示租户实例的重启持久化与生产 RLS |
+| RAG | 语义向量适配器/批量缓存、BM25 融合、过滤和引用；离线哈希回归 | 全量语义索引联网验收、神经重排消融、ANN/pgvector |
+| 前后端 | 浏览器→BFF→FastAPI→Graph→工具/模型，执行记录展示 | 浏览器全链路真实模型验收与生产域名发布 |
+| 多模态 | 合成图片/语音元数据、安全置信度门 | 真实视觉/ASR、媒体上传扫描和留存审批 |
+| 评测 | 版本化开发任务集、离线/联网模式、任务与回合分开、回退标识 | 冻结盲测集、独立 Judge、人工校准、线上 A/B |
+| 安全 | 演示令牌、商家绑定、限流、幂等、禁止真实写操作 | OIDC、安全审批、生产角色映射、备份恢复 |
 
-## Model configuration
+## 配置与实际调用
 
-Set these only in a local untracked environment file or deployment secret manager:
+聊天与向量统一放入未跟踪的 `src/backend/.env`，见 [模型选型与统一配置](模型选型与统一配置.md)。模型不是评测之后才接入：当前规划和表达已经有模型调用点；离线测试仅验证控制流和护栏，联网评测才验证实际模型质量。接口失败时规则回退保证可用性，但报告不得把回退算作模型成功。
 
-```text
-COMMERCE_LLM_BASE_URL=https://approved-provider.example/v1
-COMMERCE_LLM_API_KEY=provider-secret
-COMMERCE_LLM_MODEL=approved-model-name
-COMMERCE_LLM_PROVIDER=qwen_openai_compatible
-COMMERCE_LLM_RESPONSE_MODE=json_schema
-COMMERCE_LLM_TIMEOUT_SECONDS=8
-```
+`GET /api/v1/production-readiness` 只返回配置门禁，始终报告 `live_operations_enabled: false`。填写密钥、单条探测成功、本地合成测试通过都不等于批准真实商家接入。
 
-The adapter calls the OpenAI-compatible `/chat/completions` endpoint with `temperature: 0` and JSON-object output by default. When an approved endpoint supports it, `COMMERCE_LLM_RESPONSE_MODE=json_schema` requests a strict action-plan/answer schema; local allow-list validation remains authoritative. It sends only a bounded customer message, verified slots, response draft, and evidence summary. It never sends secrets, raw attachment bytes, full order identity information, or another tenant's data. If configuration is incomplete, network access fails, the selected endpoint does not support the schema mode, or model JSON is invalid, the deterministic route and templated answer are used instead. See [QWEN_MODEL_SETUP.md](QWEN_MODEL_SETUP.md) for the explicit synthetic-only evaluation sequence.
+## 生产发布必须另行批准
 
-## Dify-to-runtime prompt contract
-
-The imported workflow informs intent names and slot fields: `device_model`, `country`, `budget_text`, `usage_scenario`, `category_preference`, `target_product`, `connector_type`, `power_requirement`, `risk_reason`, and `handoff_needed`. The runtime planner may only return `call_tool`, `ask_user`, or `handoff`, and only these intents: product, recommendation, compatibility, policy, order, ticket, handoff.
-
-Business facts are never prompt-only: compatibility is resolved by the compatibility tool; policy uses scoped policy records; order access needs the suffix check; a support write requires idempotency; protected commerce operations always hand off. See [DIFY_WORKFLOW_SPEC.md](DIFY_WORKFLOW_SPEC.md) and [AGENT_RUNTIME_SPEC.md](AGENT_RUNTIME_SPEC.md).
-
-## Retrieval and recommendation contract
-
-1. Filter candidate products by tenant/catalogue scope, region, declared device compatibility, category, and budget before re-ranking.
-2. Attach SKU, source, price timestamp/value, compatibility declaration, and limitations to output evidence.
-3. A `bundle`/`套餐`/`套装` request selects complementary components before filling remaining recommendation positions; it must not return only three interchangeable chargers.
-4. Vehicle products are penalized unless vehicle context is explicit. Public-reference records remain labelled non-live and are never claimed as merchant stock.
-5. Missing high-value constraints cause one focused clarification rather than a confident recommendation.
-
-## Multimodal and handoff contract
-
-The MVP accepts metadata only. Production upload flow is `consent -> signed upload -> MIME signature/size/duration check -> malware scan -> EXIF strip -> provider adapter -> confidence/safety gate -> controlled tools`; raw media never enters traces/checkpoints. A possible swollen/damaged battery, uncertainty about electrical safety, or low-confidence ownership extraction must hand off.
-
-Handoffs are structured as `reason`, `summary`, `priority`, `sla_hours`, and `lifecycle`. The simulated lifecycle is `simulated_open -> simulated_in_progress -> simulated_resolved`; it does not contact a real helpdesk. A future staff resolution may add an approved, evidence-linked summary to a conversation, but never changes the original tool evidence.
-
-## Production release gate
-
-`GET /api/v1/production-readiness` intentionally reports configuration booleans only and always reports `live_operations_enabled: false`. Production activation requires all of the following outside this repository: model evaluation threshold/sign-off, Shopify sandbox OAuth installation, encrypted secrets, PostgreSQL tenant RLS, OIDC organization/role mapping, DPA/security approval, monitoring, backup/restore drill, connector rollback, and an explicit decision for each requested write operation.
+真实商家/OAuth、真实 OIDC、生产租户 RLS、退款/取消/地址/库存写操作、客户数据、媒体存储和外部客服系统均不得自动启用。须遵循 [安全审批清单](../operations/SECURITY_APPROVAL_CHECKLIST.md)；本轮没有改变这些审批状态。

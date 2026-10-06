@@ -34,7 +34,9 @@ type AgentResponse = {
   request_id?: string;
   thread_id?: string;
   handoff?: { reason?: string; summary?: string } | null;
-  tool_result_summary?: Array<{ tool?: string }>;
+  tool_result_summary?: Array<{ tool?: string; citations?: Array<{ document_id: string; chunk_id: string; version: string }> }>;
+  trace?: Array<{ node: string; outcome: string; error_code?: string | null }>;
+  plan?: { steps?: number; model_used?: boolean; model_version?: string; prompt_version?: string; elapsed_ms?: number; usage?: { total_tokens?: number } };
   detail?: string;
   error?: string;
   multimodal?: { summary?: string; confidence?: string; mode?: string } | null;
@@ -264,6 +266,13 @@ function AgentResultCard({ result }: { result: AgentResponse }) {
       </div>
       {result.recommendations?.some((product) => product.source === "public_reference_catalog") ? <p className="agent-provenance-note">Public reference facts are dated snapshots, not live merchant price or inventory.</p> : null}
       {tools.length ? <p>Verified tools: {tools.join(", ")}</p> : null}
+      <details>
+        <summary>执行记录与检索引用</summary>
+        <p>模型：{result.plan?.model_version || "未记录"}；实际参与：{result.plan?.model_used ? "是" : "否（规则回退）"}；工具步数：{result.plan?.steps ?? 0}</p>
+        <p>提示词版本：{result.plan?.prompt_version || "未记录"}；耗时：{result.plan?.elapsed_ms ?? "未记录"} ms；供应商返回 Token：{result.plan?.usage?.total_tokens ?? "未报告"}</p>
+        <ol>{result.trace?.map((event, index) => <li key={index}>{event.node} → {event.outcome}{event.error_code ? ` (${event.error_code})` : ""}</li>)}</ol>
+        <ul>{result.tool_result_summary?.flatMap((item) => item.citations || []).map((citation, index) => <li key={index}>{citation.document_id} / {citation.chunk_id} @ {citation.version}</li>)}</ul>
+      </details>
       {result.handoff?.reason ? <p>Human handoff: {result.handoff.reason}</p> : null}
       {result.handoff?.summary ? <p>{result.handoff.summary}</p> : null}
       {result.multimodal?.summary ? <p><strong>Attachment analysis:</strong> {result.multimodal.summary} ({result.multimodal.confidence || "unknown"} confidence)</p> : null}

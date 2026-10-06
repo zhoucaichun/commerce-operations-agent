@@ -18,7 +18,9 @@ export async function postToCommerceEndpoint(path: string, payload: unknown, met
   }
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
+  const configuredTimeout = Number(process.env.COMMERCE_AGENT_REQUEST_TIMEOUT_MS || "180000");
+  const timeoutMs = Number.isFinite(configuredTimeout) ? Math.max(1000, Math.min(600000, configuredTimeout)) : 180000;
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch(`${apiBaseUrl.replace(/\/$/, "")}${path}`, {
       method,
@@ -34,7 +36,7 @@ export async function postToCommerceEndpoint(path: string, payload: unknown, met
     return { ok: response.ok, status: response.status, data };
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") {
-      throw new Error("Commerce Agent request timed out after 15 seconds");
+      throw new Error(`Commerce Agent request timed out after ${timeoutMs / 1000} seconds`);
     }
     throw error;
   } finally {

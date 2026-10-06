@@ -21,6 +21,9 @@ sys.path.insert(0, str(BACKEND))
 
 from commerce_agent.store import InMemoryStore
 from commerce_agent.tools import ToolRegistry
+from commerce_agent.rag import HashingEmbedder
+from commerce_agent.config import load_local_config
+from commerce_agent.embeddings import SemanticEmbedder
 
 
 DATASET = DATA / "rag_retrieval_eval_v1.csv"
@@ -31,8 +34,8 @@ def load_cases(dataset: Path = DATASET) -> list[dict[str, str]]:
         return list(csv.DictReader(handle))
 
 
-def evaluate(cases: list[dict[str, str]], top_k: int = 4) -> dict[str, Any]:
-    tools = ToolRegistry(InMemoryStore())
+def evaluate(cases: list[dict[str, str]], top_k: int = 4, *, embedder=None) -> dict[str, Any]:
+    tools = ToolRegistry(InMemoryStore(), embedder=embedder or HashingEmbedder())
     rows: list[dict[str, Any]] = []
     for case in cases:
         result = tools.invoke("policy_search", {"topic": case["topic"], "region": case["region"], "query": case["query"]})
@@ -50,14 +53,18 @@ def evaluate(cases: list[dict[str, str]], top_k: int = 4) -> dict[str, Any]:
         filter_passed = all(region in allowed_regions for region in regions)
         rows.append({"case_id": case["case_id"], "target_document_id": target or None, "expected_empty": expected_empty, "retrieved_document_ids": ids, "passed": passed, "reciprocal_rank": reciprocal_rank, "filter_passed": filter_passed, "retrieval_mode": result["retrieval"]["retrieval_mode"]})
     total = len(rows)
+    answerable = [row for row in rows if not row["expected_empty"]]
+    unanswerable = [row for row in rows if row["expected_empty"]]
     return {
         "suite": "rag_retrieval_eval",
         "dataset": DATASET.name,
         "synthetic_data_only": True,
         "merchant_connection": "disabled",
         "total": total,
-        "recall_at_k": sum(row["passed"] for row in rows) / total if total else 0.0,
-        "mrr_at_k": sum(row["reciprocal_rank"] for row in rows) / total if total else 0.0,
+        "recall_at_k": sum(row["passed"] for row in answerable) / len(answerable) if answerable else 0.0,
+        "mrr_at_k": sum(row["reciprocal_rank"] for row in answerable) / len(answerable) if answerable else 0.0,
+        "empty_evidence_accuracy": sum(row["passed"] for row in unanswerable) / len(unanswerable) if unanswerable else None,
+        "degraded_cases": sum(row["retrieval_mode"] == "lexical_degraded" for row in rows),
         "metadata_filter_accuracy": sum(row["filter_passed"] for row in rows) / total if total else 0.0,
         "empty_evidence_cases": sum(row["expected_empty"] for row in rows),
         "cases": rows,
@@ -68,10 +75,17 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--top-k", type=int, default=4)
     parser.add_argument("--report", type=Path)
+    parser.add_argument("--live", action="store_true", help="Use configured semantic embeddings for synthetic retrieval only.")
     args = parser.parse_args()
     if args.top_k < 1:
         raise SystemExit("--top-k must be positive")
-    report = evaluate(load_cases(), args.top_k)
+    embedder = None
+    if args.live:
+        load_local_config()
+        embedder = SemanticEmbedder()
+        if not embedder.enabled:
+            raise SystemExit("Semantic embedding configuration is required for --live")
+    report = evaluate(load_cases(), args.top_k, embedder=embedder)
     if args.report:
         args.report.parent.mkdir(parents=True, exist_ok=True)
         args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")

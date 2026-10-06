@@ -17,7 +17,9 @@ class GraphOrchestrationTests(unittest.TestCase):
         response = graph.invoke(ChatRequest.from_dict({"thread_id": "graph", "message": "charger"}), "graph-request")
         nodes = [entry["node"] for entry in response.trace]
         self.assertEqual(response.status, "completed")
-        self.assertEqual(nodes[-7:], ["graph_guard_input", "graph_load_memory", "graph_planner", "graph_tool", "graph_validate", "graph_compose", "graph_persist"])
+        graph_nodes = [node for node in nodes if node.startswith("graph_")]
+        self.assertEqual(graph_nodes, ["graph_guard_input", "graph_load_memory", "graph_planner", "graph_tool", "graph_validate",
+                                      "graph_planner", "graph_tool", "graph_validate", "graph_planner", "graph_compose", "graph_persist"])
         self.assertEqual(response.plan["intent"], "product")
 
     def test_handoff_uses_explicit_terminal_node(self):

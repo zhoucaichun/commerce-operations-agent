@@ -12,6 +12,8 @@ sys.path.insert(0, str(BACKEND))
 
 from commerce_agent.agent import CommerceAgent
 from commerce_agent.models import ChatRequest
+from commerce_agent.runtime import ModelAdapter
+from commerce_agent.rag import HashingEmbedder
 
 BASE_CASES = (
     ("product", {"thread_id": "eval-product", "message": "charger"}, "completed"),
@@ -31,7 +33,8 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--report", type=Path)
     args = parser.parse_args()
-    agent, results = CommerceAgent(), []
+    agent, results = CommerceAgent(model=ModelAdapter(allow_network=False)), []
+    agent.tools.retriever.embedder = HashingEmbedder()
     for name, payload, expected in CASES:
         actual = agent.handle(ChatRequest.from_dict(payload)).status
         results.append({"name": name, "expected": expected, "actual": actual, "passed": actual == expected})

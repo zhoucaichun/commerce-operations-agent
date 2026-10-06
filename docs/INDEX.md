@@ -45,11 +45,12 @@ docs/
 | 文件 | 说明 | 状态 |
 |---|---|---|
 | `AGENT_RUNTIME_SPEC.md` | Model、Planner、Tool、Memory、Harness 的权威运行时契约。 | MVP 与生产目标均明确标注。 |
-| `RAG_IMPLEMENTATION.md` | 本地混合 RAG、引用、数据边界与后续评测顺序。 | 当前可用；仅合成数据与本地 Hashing Embedding。 |
+| `RAG_IMPLEMENTATION.md` | 本地混合 RAG、引用、数据边界与后续评测顺序。 | 语义适配器+BM25 已实现；离线 Hashing 基线；全量联网待验收。 |
 | `AGENT_PRODUCTION_IMPLEMENTATION.md` | 模型适配器、受控生成与生产激活前置条件。 | 模型连接可选；真实生产未激活。 |
 | `DIFY_WORKFLOW_SPEC.md` | Dify 的提示词/节点/badcase 如何迁入 Agent。 | Dify 仅作参考和评测来源。 |
 | `MULTIMODAL_MVP.md` | 图片/语音合成元数据 MVP 与安全边界。 | 不上传媒体、不调用视觉/语音模型。 |
-| `QWEN_MODEL_SETUP.md` | OpenAI 兼容 Qwen 配置与合成数据评测方法。 | 仅本地环境变量启用。 |
+| `模型选型与统一配置.md` | 候选模型分工、聊天/向量统一配置和启动说明。 | 统一后端 .env；单条连接有记录，全量联网待验收。 |
+| `QWEN_MODEL_SETUP.md` | 旧会话变量配置记录，指向统一说明。 | 历史入口。 |
 
 ### 集成与数据：`integration/`
 
@@ -85,3 +86,7 @@ docs/
 - **历史参考**：用于迁移、评测或追溯，不在当前运行时路径。
 
 真实商家系统、真实库存、退款、取消订单、真实地址修改、真实 OIDC 与生产客户数据均不在当前启用范围内。
+
+## 本轮升级验收入口
+
+[升级验收与待审批事项](runtime/升级验收与待审批事项.md) 汇总当前实现、实测与未完成项。统一离线验证用 `python src/eval/run_project_checks.py`，联网开发回归用 `run_agent_eval.py --live`。历史决策、Dify 导出和旧实验只作来源，不作为当前质量结论。

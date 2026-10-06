@@ -3,10 +3,15 @@
 from __future__ import annotations
 
 import json
+import time
+from threading import RLock
 
 class RedisHealth:
     def __init__(self, url: str | None) -> None:
         self.client = None
+        self._local_lock = RLock()
+        self._local_rates = {}
+        self._local_locks = {}
         if url:
             try:
                 import redis
@@ -20,7 +25,13 @@ class RedisHealth:
     def allow(self, subject: str, limit: int = 30, window_seconds: int = 60) -> bool:
         """Fixed-window local API guard; no Redis means no distributed limit."""
         if self.client is None:
-            return True
+            now = time.monotonic()
+            with self._local_lock:
+                # Expire inactive keys to avoid retaining every visitor forever.
+                self._local_rates = {k: v for k, v in self._local_rates.items() if v[0] > now}
+                expires, count = self._local_rates.get(subject, (now + window_seconds, 0))
+                self._local_rates[subject] = (expires, count + 1)
+                return count < limit
         key = f"commerce:rate:{subject}"
         value = self.client.incr(key)
         if value == 1:
@@ -29,10 +40,19 @@ class RedisHealth:
 
     def acquire_idempotency_lock(self, key: str, ttl_seconds: int = 15) -> bool:
         if self.client is None:
-            return True
+            now = time.monotonic()
+            with self._local_lock:
+                self._local_locks = {k: v for k, v in self._local_locks.items() if v > now}
+                if key in self._local_locks:
+                    return False
+                self._local_locks[key] = now + ttl_seconds
+                return True
         return bool(self.client.set(f"commerce:lock:{key}", "1", nx=True, ex=ttl_seconds))
 
     def release_idempotency_lock(self, key: str) -> None:
+        if self.client is None:
+            with self._local_lock:
+                self._local_locks.pop(key, None)
         if self.client is not None:
             self.client.delete(f"commerce:lock:{key}")
 

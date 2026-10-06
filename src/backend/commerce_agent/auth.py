@@ -15,6 +15,7 @@ class AuthenticationError(ValueError):
 class Principal:
     subject: str
     role: str
+    merchants: tuple[str, ...] = ()
 
 
 class SyntheticAuthenticator:
@@ -55,7 +56,14 @@ class SyntheticAuthenticator:
         subject, role = record.get("subject"), record.get("role")
         if not isinstance(subject, str) or role not in self._roles:
             raise AuthenticationError("synthetic token record is invalid")
-        return Principal(subject, role)
+        merchants = record.get("merchant_ids", [])
+        if not isinstance(merchants, list) or any(not isinstance(value, str) for value in merchants):
+            raise AuthenticationError("synthetic merchant scopes are invalid")
+        return Principal(subject, role, tuple(merchants))
+
+    def authorize_merchant(self, principal: Principal, merchant_id: str) -> None:
+        if self.required and merchant_id not in principal.merchants:
+            raise PermissionError("synthetic token is not scoped to this merchant")
 
     def authorize(self, principal: Principal, required_role: str) -> None:
         if self._roles[principal.role] < self._roles[required_role]:

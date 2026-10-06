@@ -9,6 +9,8 @@ sys.path.insert(0, str(BACKEND))
 
 from commerce_agent.agent import CommerceAgent
 from commerce_agent.models import ChatRequest
+from commerce_agent.runtime import ModelAdapter
+from commerce_agent.rag import HashingEmbedder
 
 
 CASES = (
@@ -19,7 +21,8 @@ CASES = (
 
 
 if __name__ == "__main__":
-    agent = CommerceAgent()
+    agent = CommerceAgent(model=ModelAdapter(allow_network=False))
+    agent.tools.retriever.embedder = HashingEmbedder()
     failures = []
     for name, payload, expected in CASES:
         actual = agent.handle(ChatRequest.from_dict(payload)).status

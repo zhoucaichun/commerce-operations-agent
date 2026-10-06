@@ -2,168 +2,40 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict
 from datetime import datetime, timezone
 import hashlib
 import re
 import time
+from threading import RLock
 from typing import Any
 from uuid import uuid4
 
 from .models import AgentResponse, ChatRequest, ValidationError
-from .multimodal import analyze_attachments
 from .store import InMemoryStore
 from .tools import ToolError, ToolRegistry
 
 
 MAX_STEPS = 6
-PROMPT_VERSION = "rules-v1"
+PROMPT_VERSION = "bounded-loop-v2"
 
 
 class CommerceAgent:
-    def __init__(self, store: InMemoryStore | None = None, checkpoint_store=None, retry_store=None) -> None:
+    def __init__(self, store: InMemoryStore | None = None, checkpoint_store=None, retry_store=None, *, model=None) -> None:
         self.store = store or InMemoryStore()
         self.tools = ToolRegistry(self.store)
         self.checkpoint_store = checkpoint_store
         self.retry_store = retry_store
+        self.turn_lock = RLock()
+        self._runtime_graph = None
+        self.model = model
 
     def handle(self, request: ChatRequest, request_id: str | None = None, planned_intent: str | None = None) -> AgentResponse:
-        request_id = request_id or f"req_{uuid4().hex}"
-        self.store.increment("chat_requests")
-        trace: list[dict[str, Any]] = []
-        summaries: list[dict[str, Any]] = []
-        state = self._load_state(request.thread_id)
-        remembered_slots = {key: value for key, value in state.get("slots", {}).items() if value}
-        if remembered_slots:
-            request = ChatRequest(
-                thread_id=request.thread_id,
-                message=request.message,
-                slots={**remembered_slots, **request.slots},
-                attachments=request.attachments,
-                idempotency_key=request.idempotency_key,
-            )
-        if self._forget_memory_request(request.message):
-            state = {"thread_id": request.thread_id, "messages": [], "slots": {}, "preferences": {}, "step_count": 0}
-            self._save_state(request.thread_id, state)
-            self._trace(trace, request_id, request.thread_id, "memory_delete", "confirmed")
-            return AgentResponse(status="completed", answer="I cleared the synthetic conversation memory for this thread. No merchant-system data was changed.", request_id=request_id, thread_id=request.thread_id, trace=trace)
-        multimodal = analyze_attachments(request.attachments)
-        if multimodal and multimodal["slots"]:
-            request = ChatRequest(
-                thread_id=request.thread_id,
-                message=request.message,
-                slots={**request.slots, **multimodal["slots"]},
-                attachments=request.attachments,
-                idempotency_key=request.idempotency_key,
-            )
-        state["messages"].append({"role": "user", "summary": self._summarize(request.message)})
-        state["slots"].update(request.slots)
-        self._remember_confirmed_preferences(state, request)
-        self._compact_memory(state)
-        if multimodal:
-            state["slots"].update(multimodal["slots"])
-            self._trace(trace, request_id, request.thread_id, "normalize_multimodal", multimodal["mode"])
-
-        self._trace(trace, request_id, request.thread_id, "guard_input", "ok")
-        risky = (multimodal or {}).get("risk_reason") or self._risk_reason(request.message)
-        if risky:
-            handoff = self._handoff(
-                self.store,
-                trace,
-                request_id,
-                request.thread_id,
-                reason=risky,
-                summary="该请求涉及首版禁止的真实写操作，已停止自动执行。",
-            )
-            self._save_state(request.thread_id, state)
-            return AgentResponse(
-                status="handoff",
-                answer="我不能在首版中直接执行退款、取消订单、修改真实地址或库存变更；可以为你整理事实并提交人工处理申请。",
-                request_id=request_id,
-                thread_id=request.thread_id,
-                handoff=handoff,
-                trace=trace, multimodal=multimodal,
-            )
-
-        self._trace(trace, request_id, request.thread_id, "load_context", "ok")
-        if state.get("step_count", 0) >= MAX_STEPS:
-            handoff = self._handoff(
-                self.store,
-                trace,
-                request_id,
-                request.thread_id,
-                reason="max_steps_reached",
-                summary=f"会话已达到最多 {MAX_STEPS} 步，停止继续调用工具。",
-            )
-            self._save_state(request.thread_id, state)
-            return AgentResponse(
-                status="handoff",
-                answer=f"本会话已达到最多 {MAX_STEPS} 步自动处理限制，已停止继续尝试并建议人工接管。",
-                request_id=request_id,
-                thread_id=request.thread_id,
-                handoff=handoff,
-                trace=trace,
-            )
-        text = request.message.lower()
-        try:
-            intent = planned_intent or self._classify_intent(text)
-            if intent == "order":
-                response = self._handle_order(request, state, trace, summaries, request_id)
-            elif intent == "compatibility":
-                response = self._handle_compatibility(request, state, trace, summaries, request_id)
-            elif intent == "policy":
-                response = self._handle_policy(request, state, trace, summaries, request_id)
-            elif intent == "ticket":
-                response = self._handle_ticket(request, state, trace, summaries, request_id)
-            elif intent == "recommendation":
-                response = self._handle_recommendation(request, state, trace, summaries, request_id)
-            elif intent == "product":
-                response = self._handle_product(request, state, trace, summaries, request_id)
-            else:
-                handoff = self._handoff(
-                    self.store,
-                    trace,
-                    request_id,
-                    request.thread_id,
-                    reason="unsupported_intent",
-                    summary="无法在受控工具白名单内确认该问题。",
-                )
-                response = AgentResponse(
-                    status="handoff",
-                    answer="我还不能可靠确认这个问题。请补充商品、兼容性、政策、订单物流，或明确说明需要人工客服协助。",
-                    request_id=request_id,
-                    thread_id=request.thread_id,
-                    handoff=handoff,
-                )
-        except ValidationError:
-            raise
-        except (ToolError, KeyError) as exc:
-            self.store.increment(f"failure:{type(exc).__name__}")
-            handoff = self._handoff(
-                self.store,
-                trace,
-                request_id,
-                request.thread_id,
-                reason="tool_error",
-                summary="受控工具未能安全返回可验证结果。",
-                error_code=type(exc).__name__,
-            )
-            response = AgentResponse(
-                status="handoff",
-                answer="我暂时无法验证足够的信息，已停止继续尝试并建议人工处理。",
-                request_id=request_id,
-                thread_id=request.thread_id,
-                handoff=handoff,
-            )
-
-        response.tool_result_summary = summaries
-        response.trace = trace
-        response.multimodal = multimodal
-        state["step_count"] = min(MAX_STEPS, state.get("step_count", 0) + len(summaries))
-        state["messages"].append({"role": "assistant", "status": response.status})
-        self._save_state(request.thread_id, state)
-        self.store.increment(response.status)
-        return response
+        """Use the same bounded runtime for direct calls and API requests."""
+        from .graph import CommerceGraph
+        with self.turn_lock:
+            if self._runtime_graph is None:
+                self._runtime_graph = CommerceGraph(self, model=self.model)
+            return self._runtime_graph.invoke(request, request_id or f"req_{uuid4().hex}", forced_intent=planned_intent)
 
     def _load_state(self, thread_id: str) -> dict[str, Any]:
         checkpoint = self.checkpoint_store.load_checkpoint(thread_id) if self.checkpoint_store else None
@@ -264,11 +136,13 @@ class CommerceAgent:
 
     def _handle_policy(self, request, state, trace, summaries, request_id):
         text = request.message.lower()
-        if any(word in text for word in ("shipping", "delivery", "logistics", "ship to")):
+        if request.slots.get("topic"):
+            topic = request.slots["topic"]
+        elif any(word in text for word in ("shipping", "delivery", "logistics", "ship to", "配送", "运输")):
             topic = "shipping"
-        elif any(word in text for word in ("warranty", "guarantee")):
+        elif any(word in text for word in ("warranty", "guarantee", "保修")):
             topic = "warranty"
-        elif any(word in text for word in ("coupon", "discount", "student")):
+        elif any(word in text for word in ("coupon", "discount", "student", "优惠", "折扣")):
             topic = "promotion"
         else:
             topic = "return"
@@ -300,14 +174,15 @@ class CommerceAgent:
         country = request.slots.get("country") or request.slots.get("region") or "US"
         budget = request.slots.get("budget") or request.slots.get("budget_text") or request.message
         usage_scenario = request.slots.get("usage_scenario") or ""
-        category = self._product_query(request.message)
+        bundle = any(word in request.message.lower() for word in ("bundle", "套装", "套餐", "setup"))
+        category = "" if bundle else (request.slots.get("category") or self._product_query(request.message))
         result = self._call_tool(
             "recommend_products",
             {"query": request.message, "device": device, "country": country, "budget": budget, "usage_scenario": usage_scenario, "category": category},
             request, request_id, trace, summaries,
         )
         products = result["products"]
-        if "bundle" in request.message.lower() and products:
+        if bundle and products:
             chargers = [item for item in products if "charger" in str(item.get("category", "")).lower()]
             cables = [item for item in result["products"] if "cable" in str(item.get("category", "")).lower()]
             if chargers and cables:
@@ -322,8 +197,8 @@ class CommerceAgent:
         evidence = [{key: item.get(key) for key in ("sku", "name", "category", "price_usd", "device_compatibility", "usage_scenarios", "source", "source_url", "source_checked_at")} for item in products]
         return AgentResponse(status="completed", answer=f"From the migrated synthetic ShopPilot catalogue, my recommended match{qualifier} is: {formatted}. These are demonstration-only products and availability; no real Shopify catalogue or inventory was queried.", request_id=request_id, thread_id=request.thread_id, recommendations=evidence)
 
-    def _handle_product(self, request, state, trace, summaries, request_id):
-        query = request.slots.get("query") or self._product_query(request.message)
+    def _handle_product(self, request, state, trace, summaries, request_id, include_knowledge=True):
+        query = request.slots.get("query") or request.slots.get("sku") or self._product_query(request.message)
         result = self._call_tool("product_search", {"query": query}, request, request_id, trace, summaries)
         if not result["products"]:
             return AgentResponse(
@@ -336,7 +211,7 @@ class CommerceAgent:
             f"{item['sku']}（{item['name']}，{item['power_w']}W，库存状态：{item['stock']}）"
             for item in result["products"]
         )
-        knowledge = self._call_tool("knowledge_search", {"query": request.message, "kind": "product"}, request, request_id, trace, summaries)
+        knowledge = self._call_tool("knowledge_search", {"query": request.message, "kind": "product"}, request, request_id, trace, summaries) if include_knowledge else {}
         citations = knowledge.get("citations", [])[:2]
         citation_note = "；".join(f"{item['document_id']}/{item['chunk_id']}@{item['version']}" for item in citations) or "未检索到补充知识片段"
         return AgentResponse(
@@ -374,19 +249,13 @@ class CommerceAgent:
         self._trace(trace, request_id, request.thread_id, "plan_next_action", name)
         started = time.perf_counter()
         try:
-            result = self.tools.invoke(name, arguments, idempotency_key=request.idempotency_key)
+            result = self.tools.execute(name, arguments, idempotency_key=request.idempotency_key)
         except ToolError as exc:
-            definition = self.tools._tools.get(name)
-            can_retry = bool(definition and definition.read_only and self.retry_store)
-            if can_retry and self.retry_store.consume_tool_retry(request_id, name):
-                self._trace(trace, request_id, request.thread_id, "tool_retry", "retrying", type(exc).__name__)
-                result = self.tools.invoke(name, arguments, idempotency_key=request.idempotency_key)
-            else:
-                self._trace(trace, request_id, request.thread_id, "validate_tool_result", "error", type(exc).__name__)
-                raise
+            self._trace(trace, request_id, request.thread_id, "validate_tool_result", "error", type(exc).__name__)
+            raise
         elapsed_ms = round((time.perf_counter() - started) * 1000, 2)
         self._trace(trace, request_id, request.thread_id, "validate_tool_result", "ok", elapsed_ms=elapsed_ms)
-        summaries.append({"tool": name, "ok": True, "result_keys": sorted(result.keys())})
+        summaries.append({"tool": name, "ok": True, "result_keys": sorted(result.keys()), "evidence": result})
         if result.get("citations"):
             citations = result["citations"][:4]
             summaries[-1]["citations"] = citations
@@ -450,10 +319,10 @@ class CommerceAgent:
     def _risk_reason(message: str) -> str | None:
         text = message.lower()
         patterns = {
-            "real_refund_or_return_action": ("我要退款", "申请退款", "直接退款", "退钱"),
-            "real_order_cancellation": ("取消订单", "帮我取消", "直接取消"),
-            "real_address_mutation": ("修改地址", "改收货地址", "更改地址"),
-            "real_inventory_mutation": ("扣库存", "改库存", "锁库存"),
+            "real_refund_or_return_action": ("我要退款", "申请退款", "直接退款", "退钱", "refund"),
+            "real_order_cancellation": ("取消订单", "帮我取消", "直接取消", "cancel order", "cancel my order"),
+            "real_address_mutation": ("修改地址", "改收货地址", "更改地址", "change address", "change my address"),
+            "real_inventory_mutation": ("扣库存", "改库存", "锁库存", "deduct inventory", "update inventory"),
         }
         for reason, keywords in patterns.items():
             if any(keyword in text for keyword in keywords):
@@ -463,10 +332,10 @@ class CommerceAgent:
     @staticmethod
     def _classify_intent(text):
         if CommerceAgent._is_order_intent(text): return "order"
+        if CommerceAgent._is_recommendation_intent(text): return "recommendation"
         if CommerceAgent._is_compatibility_intent(text): return "compatibility"
         if CommerceAgent._is_policy_intent(text): return "policy"
         if CommerceAgent._is_ticket_intent(text): return "ticket"
-        if CommerceAgent._is_recommendation_intent(text): return "recommendation"
         if CommerceAgent._is_product_intent(text): return "product"
         return "unsupported"
 
@@ -496,13 +365,13 @@ class CommerceAgent:
 
     @staticmethod
     def _find_order_id(message):
-        match = re.search(r"\b(ORD-[0-9]{4,})\b", message.upper())
+        match = re.search(r"\b((?:ORD|ORB)-[0-9]{4,})\b", message.upper())
         return match.group(1) if match else None
 
     @staticmethod
     def _find_suffix(message):
-        matches = re.findall(r"(?<!\d)(\d{4})(?!\d)", message)
-        return matches[-1] if matches else None
+        from .memory import explicit_slots
+        return explicit_slots(message).get("identity_suffix")
 
     @staticmethod
     def _find_sku(message):

@@ -34,7 +34,10 @@ class RedisGuardTests(unittest.TestCase):
 
     def test_no_redis_is_safe_local_fallback(self):
         guard = RedisHealth(None)
-        self.assertTrue(guard.allow("thread", limit=0))
+        self.assertFalse(guard.allow("thread", limit=0))
+        self.assertTrue(guard.acquire_idempotency_lock("ticket"))
+        self.assertFalse(guard.acquire_idempotency_lock("ticket"))
+        guard.release_idempotency_lock("ticket")
         self.assertTrue(guard.acquire_idempotency_lock("ticket"))
 
     def test_checkpoint_and_bounded_retry_state(self):

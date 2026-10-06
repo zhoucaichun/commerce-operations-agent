@@ -17,6 +17,8 @@ import hashlib
 import math
 import re
 from typing import Any, Iterable
+import os
+from .embeddings import EmbeddingProvider, SemanticEmbedder, EmbeddingError
 
 
 def _tokens(value: str) -> list[str]:
@@ -65,12 +67,17 @@ class HashingEmbedder:
         norm = math.sqrt(sum(value * value for value in vector))
         return tuple(value / norm for value in vector) if norm else tuple(vector)
 
+    def embed_many(self, texts):
+        return [self.embed(text) for text in texts]
+
 
 def _cosine(left: tuple[float, ...], right: tuple[float, ...]) -> float:
     return sum(a * b for a, b in zip(left, right))
 
 
 def _chunks(document: KnowledgeDocument, size: int = 560, overlap: int = 80) -> list[KnowledgeChunk]:
+    if size <= 0 or overlap < 0 or overlap >= size:
+        raise ValueError("invalid chunk size/overlap")
     clean = re.sub(r"\s+", " ", document.text).strip()
     if not clean:
         return []
@@ -104,7 +111,7 @@ def build_knowledge_documents(products: Iterable[dict[str, Any]], policies: Iter
             document_id=f"policy:{policy_id}", title=f"{region} {policy.get('topic', 'policy')} policy",
             text=f"Policy ID: {policy_id}. Region: {region}. Topic: {policy.get('topic', '')}. {summary} Keywords: {keywords}.",
             source=str(policy.get("source", "synthetic_policy_seed")), version=str(policy.get("effective_from", "synthetic-v1")),
-            metadata={"kind": "policy", "policy_id": policy_id, "topic": route_topic, "subcategory": str(policy.get("topic", "")).lower(), "region": region, "effective_from": str(policy.get("effective_from", "")), "answer_text": summary},
+            metadata={"kind": "policy", "policy_id": policy_id, "topic": route_topic, "subcategory": str(policy.get("topic", "")).lower(), "region": region, "effective_from": str(policy.get("effective_from", "")), "valid_until": str(policy.get("valid_until", "")), "answer_text": summary},
         ))
     for product in products:
         sku = str(product["sku"])
@@ -129,10 +136,11 @@ def build_knowledge_documents(products: Iterable[dict[str, Any]], policies: Iter
 class HybridRetriever:
     """Small, inspectable hybrid retriever with hard metadata filters."""
 
-    def __init__(self, documents: Iterable[KnowledgeDocument], embedder: HashingEmbedder | None = None) -> None:
-        self.embedder = embedder or HashingEmbedder()
+    def __init__(self, documents: Iterable[KnowledgeDocument], embedder: EmbeddingProvider | None = None) -> None:
+        self.embedder = embedder or (SemanticEmbedder() if os.getenv("COMMERCE_EMBEDDING_MODEL") else HashingEmbedder())
         self.chunks = [chunk for document in documents for chunk in _chunks(document)]
-        self._vectors = {chunk.chunk_id: self.embedder.embed(f"{chunk.title} {chunk.text}") for chunk in self.chunks}
+        self._vectors = {}
+        self.embedding_error = None
         self._terms = {chunk.chunk_id: Counter(_tokens(f"{chunk.title} {chunk.text}")) for chunk in self.chunks}
         self._doc_lengths = {chunk.chunk_id: sum(terms.values()) for chunk, terms in ((item, self._terms[item.chunk_id]) for item in self.chunks)}
         self._average_length = sum(self._doc_lengths.values()) / max(1, len(self._doc_lengths))
@@ -154,15 +162,26 @@ class HybridRetriever:
             if regional:
                 candidates = regional
         query_terms = Counter(_tokens(query))
-        query_vector = self.embedder.embed(query)
+        try:
+            if not self._vectors:
+                vectors = self.embedder.embed_many([f"{chunk.title} {chunk.text}" for chunk in self.chunks])
+                self._vectors = dict(zip([chunk.chunk_id for chunk in self.chunks], vectors))
+            query_vector = self.embedder.embed(query)
+            if self._vectors and len(query_vector) != len(next(iter(self._vectors.values()))):
+                raise EmbeddingError("embedding_dimension_mismatch")
+            self.embedding_error = None
+        except EmbeddingError:
+            query_vector = ()
+            self.embedding_error = "semantic_unavailable_lexical_only"
         scored: list[tuple[float, KnowledgeChunk, float, float]] = []
         for chunk in candidates:
             lexical = self._bm25(query_terms, self._terms[chunk.chunk_id], self._doc_lengths[chunk.chunk_id])
-            vector = max(0.0, _cosine(query_vector, self._vectors[chunk.chunk_id]))
+            vector = max(0.0, _cosine(query_vector, self._vectors.get(chunk.chunk_id, ()))) if query_vector else 0.0
             exact_bonus = 0.18 if any(term in chunk.title.lower() for term in query_terms if len(term) > 3) else 0.0
             region_bonus = 1.0 if requested_region and str(chunk.metadata.get("region", "")).upper() == requested_region else 0.0
             score = lexical + vector + exact_bonus + region_bonus
-            if score > 0:
+            # A region bonus or hash collision alone is not retrieval evidence.
+            if lexical > 0 or (self.embedder.mode == "semantic_api" and vector >= 0.5):
                 scored.append((score, chunk, lexical, vector))
         scored.sort(key=lambda row: (-row[0], row[1].chunk_id))
         results = []
@@ -172,7 +191,7 @@ class HybridRetriever:
                 "score": round(score, 4), "lexical_score": round(lexical, 4), "vector_score": round(vector, 4),
                 "citation": {"document_id": chunk.document_id, "chunk_id": chunk.chunk_id, "source": chunk.source, "version": chunk.version, "metadata": chunk.metadata},
             })
-        return {"query": query, "chunks": results, "retrieval_mode": self.embedder.mode, "candidate_count": len(candidates), "filters": filters}
+        return {"query": query, "chunks": results, "retrieval_mode": "lexical_degraded" if self.embedding_error else self.embedder.mode, "embedding_error": self.embedding_error, "candidate_count": len(candidates), "filters": filters}
 
     def _bm25(self, query_terms: Counter[str], document_terms: Counter[str], document_length: int) -> float:
         score, count, k1, b = 0.0, len(self._terms), 1.4, 0.75
@@ -191,6 +210,10 @@ class HybridRetriever:
         kind = filters.get("kind")
         if kind and metadata.get("kind") != kind:
             return False
+        if filters.get("sku") and metadata.get("sku") != filters["sku"]:
+            return False
+        if filters.get("category") and metadata.get("category") != filters["category"]:
+            return False
         topic = filters.get("topic")
         if topic:
             aliases = {
@@ -208,4 +231,5 @@ class HybridRetriever:
                 return False
         effective_from = str(metadata.get("effective_from", ""))
         as_of = str(filters.get("as_of", date.today().isoformat()))
-        return not effective_from or effective_from <= as_of
+        valid_until = str(metadata.get("valid_until", ""))
+        return (not effective_from or effective_from <= as_of) and (not valid_until or as_of <= valid_until)
