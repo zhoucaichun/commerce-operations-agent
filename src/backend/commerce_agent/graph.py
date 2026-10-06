@@ -168,6 +168,7 @@ class CommerceGraph:
         try:
             if tool == "knowledge_search":
                 result = self.agent._call_tool(tool, {"query": req.slots.get("query") or req.message,
+                                                      **({"region": req.slots.get("region") or req.slots["country"]} if req.slots.get("region") or req.slots.get("country") else {}),
                                                       **({"sku": req.slots["sku"]} if req.slots.get("sku") else {})}, req, state["request_id"], state["trace"], summaries)
                 response = state.get("response") or self._response(state, "completed", "")
                 if not result["chunks"] and not response.answer:

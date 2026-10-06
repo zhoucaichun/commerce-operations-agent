@@ -23,6 +23,17 @@ def plan(action="call_tool", intent="product", **kwargs):
 
 
 class BoundedAgentTests(unittest.TestCase):
+    def test_knowledge_tool_receives_explicit_region(self):
+        def transport(payload):
+            context = json.loads(payload["messages"][1]["content"])
+            if "draft_answer" in context:
+                return {"answer": context["draft_answer"]}
+            return plan("answer") if context["observations"] else plan(intent="policy", tool="knowledge_search")
+        result = CommerceGraph(CommerceAgent(), ModelAdapter(transport)).invoke(request("shipping US"), "req-region")
+        retrieval = result.tool_result_summary[0]["evidence"]["retrieval"]
+        self.assertEqual(retrieval["filters"]["region"], "US")
+        self.assertTrue(all(chunk["citation"]["metadata"].get("region", "GLOBAL") in {"US", "GLOBAL"} for chunk in retrieval["chunks"]))
+
     def test_bundle_budget_is_total_and_not_per_component(self):
         store = InMemoryStore()
         store.products = [

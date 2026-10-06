@@ -104,7 +104,8 @@ def main():
     report["git_commit"] = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.strip()
     report["working_tree_dirty"] = bool(subprocess.run(["git", "status", "--porcelain"], cwd=ROOT, capture_output=True, text=True).stdout.strip())
     valid_live = not args.live or (report["tasks_passed"] == report["task_count"] and report["model_participation"] == report["model_required_turns"] and report["retrieval_modes"].get("lexical_degraded", 0) == 0)
-    report["live_validation_complete"] = args.live and valid_live
+    report["live_subset_passed"] = args.live and valid_live
+    report["live_validation_complete"] = args.live and valid_live and report["task_count"] == len(json.loads(raw)["tasks"])
     args.report.parent.mkdir(parents=True, exist_ok=True)
     args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps({k: v for k, v in report.items() if k not in {"cases", "task_results"}}, ensure_ascii=False))
